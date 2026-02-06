@@ -211,14 +211,13 @@ contract SplitterDB is Ownable {
         uint256 id,
         uint256 amount
     ) external view returns (ReturnCalculation[] memory) {
-        // si no hay splits, o es solo 1 en la lista, se devuelve el monto completo
         if (splits[isAlbumId ? IdType.Song : IdType.User][id].length <= 1) {
             ReturnCalculation[] memory calculations = new ReturnCalculation[](
                 1
             );
             calculations[0] = ReturnCalculation({
-                isArtistId: true,
-                id: 0, // aqui indica que el monto debe ir al principal artista
+                    isArtistId: true,
+                    id: 0,
                 amountToReceive: amount
             });
             return calculations;
