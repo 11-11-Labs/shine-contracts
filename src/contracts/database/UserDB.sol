@@ -45,6 +45,7 @@ contract UserDB is IdUtils, Ownable {
         address Address;
         uint256[] PurchasedSongIds;
         uint256 Balance;
+        uint256 AccumulatedRoyalties;
         bool IsBanned;
     }
 
@@ -141,6 +142,18 @@ contract UserDB is IdUtils, Ownable {
     );
 
     /**
+     * @notice Emitted when an artist's accumulated royalties are modified
+     * @param artistId The unique identifier of the artist
+     * @param amountChanged The amount of royalties added or deducted
+     * @param changeType Whether royalties were added or deducted
+     */
+    event AccumulatedRoyaltiesChanged(
+        uint256 indexed artistId,
+        uint256 indexed amountChanged,
+        BalanceChangeType indexed changeType
+    );
+
+    /**
      * @notice Emitted when a user is banned from the platform
      * @param userId The unique identifier of the banned user
      */
@@ -205,6 +218,7 @@ contract UserDB is IdUtils, Ownable {
             Address: userAddress,
             PurchasedSongIds: new uint256[](0),
             Balance: 0,
+            AccumulatedRoyalties: 0,
             IsBanned: false
         });
 
@@ -422,6 +436,44 @@ contract UserDB is IdUtils, Ownable {
 
         emit BalanceChanged(
             userId,
+            amount,
+            BalanceChangeType.Deducted
+        );
+    }
+
+    /**
+     * @notice Adds accumulated royalties to an artist account
+     * @dev Only callable by owner. Cannot be called on banned artists.
+     * @param artistId The artist ID to credit
+     * @param amount The amount of royalties to add
+     */
+    function addAccumulatedRoyalties(
+        uint256 artistId,
+        uint256 amount
+    ) external onlyOwner onlyIfExist(artistId) onlyIfNotBanned(artistId) {
+        users[artistId].AccumulatedRoyalties += amount;
+
+        emit AccumulatedRoyaltiesChanged(
+            artistId,
+            amount,
+            BalanceChangeType.Added
+        );
+    }
+
+    /**
+     * @notice Deducts accumulated royalties from an artist account
+     * @dev Only callable by owner.
+     * @param artistId The artist ID to debit
+     * @param amount The amount of royalties to deduct
+     */
+    function deductAccumulatedRoyalties(
+        uint256 artistId,
+        uint256 amount
+    ) external onlyOwner onlyIfExist(artistId) {
+        users[artistId].AccumulatedRoyalties -= amount;
+
+        emit AccumulatedRoyaltiesChanged(
+            artistId,
             amount,
             BalanceChangeType.Deducted
         );

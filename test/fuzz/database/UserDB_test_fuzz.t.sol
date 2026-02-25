@@ -330,4 +330,41 @@ contract UserDB_test_fuzz is Constants {
             "Banned status should be updated correctly"
         );
     }
+
+        function test_fuzz_ArtistDB__addAccumulatedRoyalties(uint256 amount) public {
+        vm.startPrank(FAKE_ORCHESTRATOR.Address);
+        uint256 assignedId = userDB.register(
+            "Artist Name",
+            "ipfs://metadataURI",
+            ARTIST_1.Address
+        );
+        userDB.addAccumulatedRoyalties(assignedId, amount);
+        vm.stopPrank();
+
+        assertEq(
+            userDB.getMetadata(assignedId).AccumulatedRoyalties,
+            amount,
+            "Accumulated royalties should be updated correctly"
+        );
+    }
+
+    function test_fuzz_ArtistDB__deductAccumulatedRoyalties(uint256 amount, uint256 deductAmount) public {
+        vm.assume(deductAmount <= amount);
+        vm.startPrank(FAKE_ORCHESTRATOR.Address);
+        uint256 assignedId = userDB.register(
+            "Artist Name",
+            "ipfs://metadataURI",
+            ARTIST_1.Address
+        );
+        userDB.addAccumulatedRoyalties(assignedId, amount);
+        userDB.deductAccumulatedRoyalties(assignedId, deductAmount);
+        vm.stopPrank();
+
+        assertEq(
+            userDB.getMetadata(assignedId).AccumulatedRoyalties,
+            amount - deductAmount,
+            "Accumulated royalties should be updated correctly"
+        );
+    }
+
 }

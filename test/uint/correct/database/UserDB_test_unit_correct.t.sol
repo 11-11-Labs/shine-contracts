@@ -274,4 +274,40 @@ contract UserDB_test_unit_correct is Constants {
             "User should be marked as banned"
         );
     }
+
+
+    function test_unit_correct_ArtistDB__addAccumulatedRoyalties() public {
+        vm.startPrank(FAKE_ORCHESTRATOR.Address);
+        uint256 assignedId = _userDB.register(
+            "Artist Name",
+            "ipfs://metadataURI",
+            ARTIST_1.Address
+        );
+        _userDB.addAccumulatedRoyalties(assignedId, 1000);
+        vm.stopPrank();
+
+        assertEq(
+            _userDB.getMetadata(assignedId).AccumulatedRoyalties,
+            1000,
+            "Accumulated royalties should be updated correctly"
+        );
+    }
+
+    function test_unit_correct_ArtistDB__deductAccumulatedRoyalties() public {
+        vm.startPrank(FAKE_ORCHESTRATOR.Address);
+        uint256 assignedId = _userDB.register(
+            "Artist Name",
+            "ipfs://metadataURI",
+            ARTIST_1.Address
+        );
+        _userDB.addAccumulatedRoyalties(assignedId, 1000);
+        _userDB.deductAccumulatedRoyalties(assignedId, 500);
+        vm.stopPrank();
+
+        assertEq(
+            _userDB.getMetadata(assignedId).AccumulatedRoyalties,
+            500,
+            "Accumulated royalties should be updated correctly"
+        );
+    }
 }
