@@ -14,25 +14,21 @@ contract Orchestrator_test_unit_correct_Song is Constants {
     uint256 ARTIST_3_ID;
     function executeBeforeSetUp() internal override {
         ARTIST_1_ID = _execute_orchestrator_register(
-            true,
             "initial_artist",
             "https://arweave.net/initialArtistURI",
             ARTIST_1.Address
         );
         ARTIST_2_ID = _execute_orchestrator_register(
-            true,
             "second_artist",
             "https://arweave.net/secondArtistURI",
             ARTIST_2.Address
         );
         ARTIST_3_ID = _execute_orchestrator_register(
-            true,
             "third_artist",
             "https://arweave.net/thirdArtistURI",
             ARTIST_3.Address
         );
         USER_ID = _execute_orchestrator_register(
-            false,
             "initial_user",
             "https://arweave.net/initialUserURI",
             USER.Address
@@ -67,7 +63,7 @@ contract Orchestrator_test_unit_correct_Song is Constants {
         SongDB.Metadata memory song = songDB.getMetadata(songID);
         assertEq(song.Title, "Song Title", "Song title should match");
         assertEq(
-            song.PrincipalArtistId,
+            song.PrincipalUserId,
             ARTIST_1_ID,
             "Principal artist ID should match"
         );
@@ -125,7 +121,7 @@ contract Orchestrator_test_unit_correct_Song is Constants {
         SongDB.Metadata memory song = songDB.getMetadata(songID);
         assertEq(song.Title, "Updated Song", "Updated song title should match");
         assertEq(
-            song.PrincipalArtistId,
+            song.PrincipalUserId,
             ARTIST_1_ID,
             "Principal artist ID should match"
         );
@@ -246,7 +242,7 @@ contract Orchestrator_test_unit_correct_Song is Constants {
         );
 
         assertEq(
-            artistDB.getMetadata(ARTIST_1_ID).Balance,
+            userDB.getMetadata(ARTIST_1_ID).Balance,
             netPrice,
             "Principal artist's balance should be updated"
         );
@@ -317,7 +313,7 @@ contract Orchestrator_test_unit_correct_Song is Constants {
         );
 
         assertEq(
-            artistDB.getMetadata(ARTIST_1_ID).Balance,
+            userDB.getMetadata(ARTIST_1_ID).Balance,
             netPrice + extraAmount,
             "Principal artist's balance should be updated"
         );
@@ -378,7 +374,7 @@ contract Orchestrator_test_unit_correct_Song is Constants {
         );
 
         assertEq(
-            artistDB.getMetadata(ARTIST_1_ID).Balance,
+            userDB.getMetadata(ARTIST_1_ID).Balance,
             0,
             "Principal artist's balance should be unchanged after gifting"
         );

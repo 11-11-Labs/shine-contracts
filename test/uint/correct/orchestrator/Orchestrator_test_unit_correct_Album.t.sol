@@ -15,13 +15,11 @@ contract Orchestrator_test_unit_correct_Album is Constants {
 
     function executeBeforeSetUp() internal override {
         ARTIST_ID = _execute_orchestrator_register(
-            true,
             "initial_artist",
             "https://arweave.net/initialArtistURI",
             ARTIST_1.Address
         );
         USER_ID = _execute_orchestrator_register(
-            false,
             "initial_user",
             "https://arweave.net/initialUserURI",
             USER.Address
@@ -80,7 +78,7 @@ contract Orchestrator_test_unit_correct_Album is Constants {
 
         assertEq(metadata.Title, "Initial Album", "Album title mismatch");
         assertEq(
-            metadata.PrincipalArtistId,
+            metadata.PrincipalUserId,
             ARTIST_ID,
             "Album principal artist ID mismatch"
         );
@@ -241,7 +239,7 @@ contract Orchestrator_test_unit_correct_Album is Constants {
         );
 
         assertEq(
-            artistDB.getMetadata(ARTIST_ID).Balance,
+            userDB.getMetadata(ARTIST_ID).Balance,
             albumDB.getMetadata(albumID).Price,
             "Principal artist's balance should be updated"
         );
@@ -305,7 +303,7 @@ contract Orchestrator_test_unit_correct_Album is Constants {
         );
 
         assertEq(
-            artistDB.getMetadata(ARTIST_ID).Balance,
+            userDB.getMetadata(ARTIST_ID).Balance,
             albumDB.getMetadata(albumID).Price + extraAmount,
             "Principal artist's balance should be updated"
         );

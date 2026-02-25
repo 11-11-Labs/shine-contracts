@@ -13,7 +13,7 @@ contract AlbumDB_test_fuzz is Constants {
 
     struct RegisterInputs {
         string title;
-        uint256 principalArtistId;
+        uint256 principalUserId;
         string metadataURI;
         uint256[3] musicIds;
         uint256 price;
@@ -36,7 +36,7 @@ contract AlbumDB_test_fuzz is Constants {
         }
         uint256 assignedId = albumDB.register(
             inputs.title,
-            inputs.principalArtistId,
+            inputs.principalUserId,
             inputs.metadataURI,
             musicIds,
             inputs.price,
@@ -54,8 +54,8 @@ contract AlbumDB_test_fuzz is Constants {
             "Album title should match"
         );
         assertEq(
-            albumDB.getMetadata(assignedId).PrincipalArtistId,
-            inputs.principalArtistId,
+            albumDB.getMetadata(assignedId).PrincipalUserId,
+            inputs.principalUserId,
             "Principal artist ID should match"
         );
         assertEq(
@@ -226,7 +226,7 @@ contract AlbumDB_test_fuzz is Constants {
 
     struct ChangeInputs {
         string title;
-        uint256 principalArtistId;
+        uint256 principalUserId;
         string metadataURI;
         uint256[] musicIds;
         uint256 price;
@@ -264,7 +264,7 @@ contract AlbumDB_test_fuzz is Constants {
         albumDB.change(
             assignedId,
             inputs.title,
-            inputs.principalArtistId,
+            inputs.principalUserId,
             inputs.metadataURI,
             inputs.musicIds,
             inputs.price,
@@ -281,8 +281,8 @@ contract AlbumDB_test_fuzz is Constants {
             "Album title should be updated"
         );
         assertEq(
-            albumDB.getMetadata(assignedId).PrincipalArtistId,
-            inputs.principalArtistId,
+            albumDB.getMetadata(assignedId).PrincipalUserId,
+            inputs.principalUserId,
             "Principal artist ID should be updated"
         );
         assertEq(

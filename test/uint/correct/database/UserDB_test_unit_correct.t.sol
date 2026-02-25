@@ -276,7 +276,7 @@ contract UserDB_test_unit_correct is Constants {
     }
 
 
-    function test_unit_correct_ArtistDB__addAccumulatedRoyalties() public {
+    function test_unit_correct_UserDB__addAccumulatedRoyalties() public {
         vm.startPrank(FAKE_ORCHESTRATOR.Address);
         uint256 assignedId = _userDB.register(
             "Artist Name",
@@ -293,7 +293,7 @@ contract UserDB_test_unit_correct is Constants {
         );
     }
 
-    function test_unit_correct_ArtistDB__deductAccumulatedRoyalties() public {
+    function test_unit_correct_UserDB__deductAccumulatedRoyalties() public {
         vm.startPrank(FAKE_ORCHESTRATOR.Address);
         uint256 assignedId = _userDB.register(
             "Artist Name",

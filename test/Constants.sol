@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import "forge-std/Test.sol";
 import {ERC20} from "@solady/tokens/ERC20.sol";
 import {AlbumDB} from "@shine/contracts/database/AlbumDB.sol";
-import {ArtistDB} from "@shine/contracts/database/ArtistDB.sol";
 import {SongDB} from "@shine/contracts/database/SongDB.sol";
 import {UserDB} from "@shine/contracts/database/UserDB.sol";
 import {Orchestrator} from "@shine/contracts/orchestrator/Orchestrator.sol";
@@ -12,13 +11,11 @@ import {Orchestrator} from "@shine/contracts/orchestrator/Orchestrator.sol";
 abstract contract Constants is Test {
     ///@dev this are the contract instances used in separate tests
     AlbumDB _albumDB;
-    ArtistDB _artistDB;
     SongDB _songDB;
     UserDB _userDB;
 
     ///@dev these are the contract instances used in conjunction with orchestrator
     AlbumDB albumDB;
-    ArtistDB artistDB;
     SongDB songDB;
     UserDB userDB;
     Orchestrator orchestrator;
@@ -97,14 +94,12 @@ abstract contract Constants is Test {
         );
 
         albumDB = new AlbumDB(address(orchestrator));
-        artistDB = new ArtistDB(address(orchestrator));
         songDB = new SongDB(address(orchestrator));
         userDB = new UserDB(address(orchestrator));
 
         vm.startPrank(ADMIN.Address);
         orchestrator.setDatabaseAddresses(
             address(albumDB),
-            address(artistDB),
             address(songDB),
             address(userDB)
         );
@@ -130,14 +125,12 @@ abstract contract Constants is Test {
     }
 
     function _execute_orchestrator_register(
-        bool isArtist,
         string memory name,
         string memory metadataURI,
         address userAddress
     ) internal virtual returns (uint256) {
         vm.startPrank(userAddress);
         uint256 id = orchestrator.register(
-            isArtist,
             name,
             metadataURI,
             userAddress
@@ -162,8 +155,8 @@ abstract contract Constants is Test {
     function _execute_orchestrator_registerSong(
         address principalArtistAddress,
         string memory title,
-        uint256 principalArtistId,
-        uint256[] memory featuredArtistIds,
+        uint256 principalUserId,
+        uint256[] memory featuredUserIds,
         string memory mediaURI,
         string memory metadataURI,
         bool canBePurchased,
@@ -172,8 +165,8 @@ abstract contract Constants is Test {
         vm.startPrank(principalArtistAddress);
         uint256 songId = orchestrator.registerSong(
             title,
-            principalArtistId,
-            featuredArtistIds,
+            principalUserId,
+            featuredUserIds,
             mediaURI,
             metadataURI,
             canBePurchased,

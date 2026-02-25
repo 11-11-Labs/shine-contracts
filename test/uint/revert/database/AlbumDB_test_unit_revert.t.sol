@@ -498,9 +498,9 @@ contract AlbumDB_test_unit_revert is Constants {
             "Title should be the same due to revert"
         );
         assertEq(
-            _albumDB.getMetadata(assignedId).PrincipalArtistId,
+            _albumDB.getMetadata(assignedId).PrincipalUserId,
             1,
-            "PrincipalArtistId should be the same due to revert"
+            "PrincipalUserId should be the same due to revert"
         );
         assertEq(
             _albumDB.getMetadata(assignedId).MetadataURI,
@@ -637,9 +637,9 @@ contract AlbumDB_test_unit_revert is Constants {
             "Title should be the same due to revert"
         );
         assertEq(
-            _albumDB.getMetadata(assignedId).PrincipalArtistId,
+            _albumDB.getMetadata(assignedId).PrincipalUserId,
             1,
-            "PrincipalArtistId should be the same due to revert"
+            "PrincipalUserId should be the same due to revert"
         );
         assertEq(
             _albumDB.getMetadata(assignedId).MetadataURI,
@@ -745,9 +745,9 @@ contract AlbumDB_test_unit_revert is Constants {
             "Title should be the same due to revert"
         );
         assertEq(
-            _albumDB.getMetadata(assignedId).PrincipalArtistId,
+            _albumDB.getMetadata(assignedId).PrincipalUserId,
             1,
-            "PrincipalArtistId should be the same due to revert"
+            "PrincipalUserId should be the same due to revert"
         );
         assertEq(
             _albumDB.getMetadata(assignedId).MetadataURI,

@@ -25,7 +25,6 @@ import {EventsLib} from "@shine/contracts/orchestrator/library/EventsLib.sol";
 
 import {SongDB} from "@shine/contracts/database/SongDB.sol";
 import {AlbumDB} from "@shine/contracts/database/AlbumDB.sol";
-import {ArtistDB} from "@shine/contracts/database/ArtistDB.sol";
 import {UserDB} from "@shine/contracts/database/UserDB.sol";
 
 contract Orchestrator is Ownable {
@@ -52,7 +51,6 @@ contract Orchestrator is Ownable {
     /// @notice Contract references to all database contracts
     SongDB private songDB;
     AlbumDB private albumDB;
-    ArtistDB private artistDB;
     UserDB private userDB;
 
     //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 Modifiers 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋
@@ -72,27 +70,7 @@ contract Orchestrator is Ownable {
      * @param userId The user ID to check for existence
      */
     modifier userIdExists(uint256 userId) {
-        if (!userDB.exists(userId)) revert ErrorsLib.UserIdDoesNotExist();
-        _;
-    }
-
-    /**
-     * @notice Validates that the sender is the owner of the specified artist ID
-     * @param artistId The artist ID to validate against the sender
-     */
-    modifier senderIsArtistId(uint256 artistId) {
-        if (artistDB.getAddress(artistId) != msg.sender)
-            revert ErrorsLib.AddressIsNotOwnerOfArtistId();
-        _;
-    }
-
-    /**
-     * @notice Validates that the specified artist ID exists
-     * @param artistId The artist ID to check for existence
-     */
-    modifier artistIdExists(uint256 artistId) {
-        if (!artistDB.exists(artistId))
-            revert ErrorsLib.ArtistIdDoesNotExist(artistId);
+        if (!userDB.exists(userId)) revert ErrorsLib.UserIdDoesNotExist(userId);
         _;
     }
 
@@ -136,77 +114,49 @@ contract Orchestrator is Ownable {
     //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 User/Artist Registration 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋
 
     /**
-     * @notice Registers a new user or artist in the platform
-     * @dev Routes registration to either ArtistDB or UserDB based on isArtist flag
-     * @param isArtist True to register as artist, false to register as user
-     * @param name The display name for the user/artist
+     * @notice Registers a new user in the platform
+     * @param name The display name for the user
      * @param metadataURI URI pointing to off-chain profile metadata (e.g., IPFS)
-     * @param addressToUse The blockchain address associated with this user/artist
-     * @return The newly assigned ID for the registered user/artist
+     * @param addressToUse The blockchain address associated with this user
+     * @return The newly assigned ID for the registered user
      */
     function register(
-        bool isArtist,
         string memory name,
         string memory metadataURI,
         address addressToUse
     ) external returns (uint256) {
-        if (isArtist) {
-            return artistDB.register(name, metadataURI, addressToUse);
-        } else {
-            return userDB.register(name, metadataURI, addressToUse);
-        }
+        return userDB.register(name, metadataURI, addressToUse);
     }
 
     /**
-     * @notice Updates basic profile data for a user or artist
+     * @notice Updates basic profile data for a user
      * @dev Only the owner of the ID can update their own profile
-     * @param isArtist True to update artist profile, false for user profile
-     * @param id The user/artist ID to update
+     * @param id The user ID to update
      * @param name New display name
      * @param metadataURI New metadata URI for profile information
      */
     function chnageBasicData(
-        bool isArtist,
         uint256 id,
         string memory name,
         string memory metadataURI
     ) external {
-        if (isArtist) {
-            if (artistDB.getAddress(id) != msg.sender)
-                revert ErrorsLib.AddressIsNotOwnerOfArtistId();
+        if (userDB.getAddress(id) != msg.sender)
+            revert ErrorsLib.AddressIsNotOwnerOfUserId();
 
-            artistDB.changeBasicData(id, name, metadataURI);
-        } else {
-            if (userDB.getAddress(id) != msg.sender)
-                revert ErrorsLib.AddressIsNotOwnerOfUserId();
-
-            userDB.changeBasicData(id, name, metadataURI);
-        }
+        userDB.changeBasicData(id, name, metadataURI);
     }
 
     /**
-     * @notice Changes the blockchain address associated with a user/artist account
+     * @notice Changes the blockchain address associated with a user account
      * @dev Only the current owner of the ID can change the address. Enables address transfers.
-     * @param isArtist True to change artist address, false for user address
-     * @param id The user/artist ID whose address to change
+     * @param id The user ID whose address to change
      * @param newAddress The new blockchain address to associate with this account
      */
-    function changeAddress(
-        bool isArtist,
-        uint256 id,
-        address newAddress
-    ) external {
-        if (isArtist) {
-            if (artistDB.getAddress(id) != msg.sender)
-                revert ErrorsLib.AddressIsNotOwnerOfArtistId();
+    function changeAddress(uint256 id, address newAddress) external {
+        if (userDB.getAddress(id) != msg.sender)
+            revert ErrorsLib.AddressIsNotOwnerOfUserId();
 
-            artistDB.changeAddress(id, newAddress);
-        } else {
-            if (userDB.getAddress(id) != msg.sender)
-                revert ErrorsLib.AddressIsNotOwnerOfUserId();
-
-            userDB.changeAddress(id, newAddress);
-        }
+        userDB.changeAddress(id, newAddress);
     }
 
     //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 Fund Management 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋
@@ -250,55 +200,40 @@ contract Orchestrator is Ownable {
     }
 
     /**
-     * @notice Allows a user to donate funds directly to an artist
-     * @dev Transfers funds from user balance to artist balance. User must have sufficient balance.
+     * @notice Allows a user to donate funds directly to another user (artist)
+     * @dev Transfers funds from user balance to another user's balance. User must have sufficient balance.
      * @param userId The ID of the user making the donation
-     * @param toArtistId The ID of the artist receiving the donation
+     * @param toUserId The ID of the user receiving the donation
      * @param amount The donation amount in stablecoin units
      */
     function makeDonation(
         uint256 userId,
-        uint256 toArtistId,
+        uint256 toUserId,
         uint256 amount
-    ) external senderIsUserId(userId) artistIdExists(toArtistId) {
+    ) external senderIsUserId(userId) userIdExists(toUserId) {
         if (userDB.getBalance(userId) < amount)
             revert ErrorsLib.InsufficientBalance();
 
         userDB.deductBalance(userId, amount);
-        artistDB.addBalance(toArtistId, amount);
+        userDB.addBalance(toUserId, amount);
 
-        emit EventsLib.DonationMade(userId, toArtistId, amount);
+        emit EventsLib.DonationMade(userId, toUserId, amount);
     }
 
     /**
      * @notice Withdraws stablecoin funds from a user/artist account to their blockchain address
      * @dev Only the owner of the account can withdraw. Requires sufficient balance.
-     * @param isArtist True to withdraw from artist account, false for user account
      * @param userId The artist/user ID to withdraw from
      * @param amount The amount of stablecoin to withdraw
      */
-    function withdrawFunds(
-        bool isArtist,
-        uint256 userId,
-        uint256 amount
-    ) external {
-        if (isArtist) {
-            if (artistDB.getAddress(userId) != msg.sender)
-                revert ErrorsLib.AddressIsNotOwnerOfArtistId();
+    function withdrawFunds(uint256 userId, uint256 amount) external {
+        if (userDB.getAddress(userId) != msg.sender)
+            revert ErrorsLib.AddressIsNotOwnerOfUserId();
 
-            if (artistDB.getBalance(userId) < amount)
-                revert ErrorsLib.InsufficientBalance();
+        if (userDB.getBalance(userId) < amount)
+            revert ErrorsLib.InsufficientBalance();
 
-            artistDB.deductBalance(userId, amount);
-        } else {
-            if (userDB.getAddress(userId) != msg.sender)
-                revert ErrorsLib.AddressIsNotOwnerOfUserId();
-
-            if (userDB.getBalance(userId) < amount)
-                revert ErrorsLib.InsufficientBalance();
-
-            userDB.deductBalance(userId, amount);
-        }
+        userDB.deductBalance(userId, amount);
 
         IERC20(stablecoin.current).transfer(msg.sender, amount);
     }
@@ -326,11 +261,11 @@ contract Orchestrator is Ownable {
         string memory metadataURI,
         bool canBePurchased,
         uint256 netprice
-    ) external senderIsArtistId(principalArtistId) returns (uint256) {
+    ) external senderIsUserId(principalArtistId) returns (uint256) {
         if (artistIDs.length > 0) {
             for (uint256 i = 0; i < artistIDs.length; i++) {
-                if (!artistDB.exists(artistIDs[i]))
-                    revert ErrorsLib.ArtistIdDoesNotExist(artistIDs[i]);
+                if (!userDB.exists(artistIDs[i]))
+                    revert ErrorsLib.UserIdDoesNotExist(artistIDs[i]);
             }
         }
 
@@ -367,11 +302,11 @@ contract Orchestrator is Ownable {
         string memory metadataURI,
         bool canBePurchased,
         uint256 price
-    ) external senderIsArtistId(songDB.getPrincipalArtistId(id)) {
+    ) external senderIsUserId(songDB.getPrincipalArtistId(id)) {
         if (artistIDs.length > 0) {
             for (uint256 i = 0; i < artistIDs.length; i++) {
-                if (!artistDB.exists(artistIDs[i]))
-                    revert ErrorsLib.ArtistIdDoesNotExist(artistIDs[i]);
+                if (!userDB.exists(artistIDs[i]))
+                    revert ErrorsLib.UserIdDoesNotExist(artistIDs[i]);
             }
         }
 
@@ -398,7 +333,7 @@ contract Orchestrator is Ownable {
     function changeSongPurchaseability(
         uint256 songId,
         bool canBePurchased
-    ) external senderIsArtistId(songDB.getPrincipalArtistId(songId)) {
+    ) external senderIsUserId(songDB.getPrincipalArtistId(songId)) {
         songDB.changePurchaseability(songId, canBePurchased);
     }
 
@@ -411,7 +346,7 @@ contract Orchestrator is Ownable {
     function changeSongPrice(
         uint256 songId,
         uint256 price
-    ) external senderIsArtistId(songDB.getPrincipalArtistId(songId)) {
+    ) external senderIsUserId(songDB.getPrincipalArtistId(songId)) {
         songDB.changePrice(songId, price);
     }
 
@@ -428,7 +363,7 @@ contract Orchestrator is Ownable {
         userDB.addSong(userID, songId);
 
         uint256 netPrice = songDB.getPrice(songId);
-        
+
         if (netPrice + extraAmount > 0)
             _executePayment(
                 userID,
@@ -449,7 +384,7 @@ contract Orchestrator is Ownable {
     function giftSong(
         uint256 songId,
         uint256 toUserId
-    ) external senderIsArtistId(songDB.getPrincipalArtistId(songId)) {
+    ) external senderIsUserId(songDB.getPrincipalArtistId(songId)) {
         songDB.gift(songId, toUserId);
         userDB.addSong(toUserId, songId);
 
@@ -483,7 +418,7 @@ contract Orchestrator is Ownable {
         bool isASpecialEdition,
         string memory specialEditionName,
         uint256 maxSupplySpecialEdition
-    ) external senderIsArtistId(principalArtistId) returns (uint256) {
+    ) external senderIsUserId(principalArtistId) returns (uint256) {
         if (bytes(title).length == 0) revert ErrorsLib.TitleCannotBeEmpty();
 
         if (isASpecialEdition) {
@@ -539,7 +474,7 @@ contract Orchestrator is Ownable {
         bool canBePurchased,
         string memory specialEditionName,
         uint256 maxSupplySpecialEdition
-    ) external senderIsArtistId(albumDB.getPrincipalArtistId(id)) {
+    ) external senderIsUserId(albumDB.getPrincipalArtistId(id)) {
         if (
             albumDB.isAnSpecialEdition(id) &&
             maxSupplySpecialEdition <= albumDB.getTotalSupply(id)
@@ -570,7 +505,7 @@ contract Orchestrator is Ownable {
     function changeAlbumPurchaseability(
         uint256 albumId,
         bool canBePurchased
-    ) external senderIsArtistId(albumDB.getPrincipalArtistId(albumId)) {
+    ) external senderIsUserId(albumDB.getPrincipalArtistId(albumId)) {
         albumDB.changePurchaseability(albumId, canBePurchased);
     }
 
@@ -583,7 +518,7 @@ contract Orchestrator is Ownable {
     function changeAlbumPrice(
         uint256 albumId,
         uint256 price
-    ) external senderIsArtistId(albumDB.getPrincipalArtistId(albumId)) {
+    ) external senderIsUserId(albumDB.getPrincipalArtistId(albumId)) {
         albumDB.changePrice(albumId, price);
     }
 
@@ -623,7 +558,7 @@ contract Orchestrator is Ownable {
     function giftAlbum(
         uint256 albumId,
         uint256 toUserId
-    ) external senderIsArtistId(albumDB.getPrincipalArtistId(albumId)) {
+    ) external senderIsUserId(albumDB.getPrincipalArtistId(albumId)) {
         uint[] memory listOfSong = albumDB.gift(albumId, toUserId);
         userDB.addSongs(toUserId, listOfSong);
 
@@ -637,13 +572,11 @@ contract Orchestrator is Ownable {
      * @dev Can only be called once. Sets up references to all four database contracts.
      *      After this, cannot be changed without migration.
      * @param _dbalbum Address of the AlbumDB contract
-     * @param _dbartist Address of the ArtistDB contract
      * @param _dbsong Address of the SongDB contract
      * @param _dbuser Address of the UserDB contract
      */
     function setDatabaseAddresses(
         address _dbalbum,
-        address _dbartist,
         address _dbsong,
         address _dbuser
     ) external onlyOwner {
@@ -651,13 +584,11 @@ contract Orchestrator is Ownable {
             revert ErrorsLib.AddressSetupAlreadyDone();
 
         dbAddress.album = _dbalbum;
-        dbAddress.artist = _dbartist;
         dbAddress.song = _dbsong;
         dbAddress.user = _dbuser;
 
         songDB = SongDB(_dbsong);
         albumDB = AlbumDB(_dbalbum);
-        artistDB = ArtistDB(_dbartist);
         userDB = UserDB(_dbuser);
         breaker.addressSetup = bytes1(0x01);
     }
@@ -730,7 +661,7 @@ contract Orchestrator is Ownable {
             revert ErrorsLib.ProposedAddressCannotBeZero();
 
         albumDB.transferOwnership(orchestratorAddressToMigrate);
-        artistDB.transferOwnership(orchestratorAddressToMigrate);
+        userDB.transferOwnership(orchestratorAddressToMigrate);
         songDB.transferOwnership(orchestratorAddressToMigrate);
         userDB.transferOwnership(orchestratorAddressToMigrate);
 
@@ -774,12 +705,12 @@ contract Orchestrator is Ownable {
     function giveCollectedFeesToArtist(
         uint256 artistId,
         uint256 amount
-    ) external onlyOwner artistIdExists(artistId) {
+    ) external onlyOwner userIdExists(artistId) {
         if (amountCollectedInFees < amount)
             revert ErrorsLib.InsufficientBalance();
 
         amountCollectedInFees -= amount;
-        artistDB.addBalance(artistId, amount);
+        userDB.addBalance(artistId, amount);
     }
 
     /**
@@ -866,14 +797,6 @@ contract Orchestrator is Ownable {
     }
 
     /**
-     * @notice Gets the address of the ArtistDB contract
-     * @return Address of the ArtistDB contract
-     */
-    function getArtistDBAddress() external view returns (address) {
-        return dbAddress.artist;
-    }
-
-    /**
      * @notice Gets the address of the SongDB contract
      * @return Address of the SongDB contract
      */
@@ -942,7 +865,7 @@ contract Orchestrator is Ownable {
 
         if (totalToDeduct > 0) {
             userDB.deductBalance(userId, totalToDeduct);
-            artistDB.addBalance(artistId, netPrice + extraAmount);
+            userDB.addBalance(artistId, netPrice + extraAmount);
         }
 
         if (calculatedFee > 0) amountCollectedInFees += calculatedFee;

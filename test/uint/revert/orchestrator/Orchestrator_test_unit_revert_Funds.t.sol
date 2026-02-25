@@ -13,19 +13,16 @@ contract Orchestrator_test_unit_revert_Funds is Constants {
     uint256 WILDCARD_USER_ID;
     function executeBeforeSetUp() internal override {
         ARTIST_1_ID = _execute_orchestrator_register(
-            true,
             "initial_artist",
             "https://arweave.net/initialArtistURI",
             ARTIST_1.Address
         );
         USER_ID = _execute_orchestrator_register(
-            false,
             "initial_user",
             "https://arweave.net/initialUserURI",
             USER.Address
         );
         WILDCARD_USER_ID = _execute_orchestrator_register(
-            false,
             "wildcard_user",
             "https://arweave.net/wildcardUserURI",
             WILDCARD_ACCOUNT.Address
@@ -94,7 +91,7 @@ contract Orchestrator_test_unit_revert_Funds is Constants {
         orchestrator.makeDonation(USER_ID, ARTIST_1_ID, 10_000000);
         vm.stopPrank();
 
-        uint256 artistBalance = artistDB.getMetadata(ARTIST_1_ID).Balance;
+        uint256 artistBalance = userDB.getMetadata(ARTIST_1_ID).Balance;
         assertEq(
             artistBalance,
             0,
@@ -111,7 +108,7 @@ contract Orchestrator_test_unit_revert_Funds is Constants {
 
         vm.startPrank(WILDCARD_ACCOUNT.Address);
         vm.expectRevert(ErrorsLib.AddressIsNotOwnerOfUserId.selector);
-        orchestrator.withdrawFunds(false, USER_ID, withdrawAmount);
+        orchestrator.withdrawFunds(USER_ID, withdrawAmount);
         vm.stopPrank();
 
         uint256 userBalanceAfterWithdraw = userDB.getMetadata(USER_ID).Balance;
@@ -135,7 +132,7 @@ contract Orchestrator_test_unit_revert_Funds is Constants {
 
         vm.startPrank(USER.Address);
         vm.expectRevert(ErrorsLib.InsufficientBalance.selector);
-        orchestrator.withdrawFunds(false, USER_ID, withdrawAmount);
+        orchestrator.withdrawFunds(USER_ID, withdrawAmount);
         vm.stopPrank();
 
         uint256 userBalanceAfterWithdraw = userDB.getMetadata(USER_ID).Balance;
@@ -152,14 +149,10 @@ contract Orchestrator_test_unit_revert_Funds is Constants {
         );
     }
 
-    function test_unit_revert_withdrawFunds_artist_AddressIsNotOwnerOfArtistId()
+    function test_unit_revert_withdrawFunds_artist_AddressIsNotOwnerOfUserId()
         public
     {
-        _execute_orchestrator_depositFunds(
-            USER_ID,
-            USER.Address,
-            30_000_000
-        ); // 30 USDC
+        _execute_orchestrator_depositFunds(USER_ID, USER.Address, 30_000_000); // 30 USDC
 
         vm.startPrank(USER.Address);
         orchestrator.makeDonation(USER_ID, ARTIST_1_ID, 30_000_000);
@@ -168,11 +161,11 @@ contract Orchestrator_test_unit_revert_Funds is Constants {
         uint256 withdrawAmount = 10_000_000; // 10 USDC with 6 decimals
 
         vm.startPrank(WILDCARD_ACCOUNT.Address);
-        vm.expectRevert(ErrorsLib.AddressIsNotOwnerOfArtistId.selector);
-        orchestrator.withdrawFunds(true, ARTIST_1_ID, withdrawAmount);
+        vm.expectRevert(ErrorsLib.AddressIsNotOwnerOfUserId.selector);
+        orchestrator.withdrawFunds(ARTIST_1_ID, withdrawAmount);
         vm.stopPrank();
 
-        uint256 artistBalanceAfterWithdraw = artistDB
+        uint256 artistBalanceAfterWithdraw = userDB
             .getMetadata(ARTIST_1_ID)
             .Balance;
         assertEq(
@@ -188,12 +181,10 @@ contract Orchestrator_test_unit_revert_Funds is Constants {
         );
     }
 
-    function test_unit_revert_withdrawFunds_artist_InsufficientBalance() public {
-        _execute_orchestrator_depositFunds(
-            USER_ID,
-            USER.Address,
-            20_000_000
-        ); // 20 USDC
+    function test_unit_revert_withdrawFunds_artist_InsufficientBalance()
+        public
+    {
+        _execute_orchestrator_depositFunds(USER_ID, USER.Address, 20_000_000); // 20 USDC
 
         vm.startPrank(USER.Address);
         orchestrator.makeDonation(USER_ID, ARTIST_1_ID, 20_000_000);
@@ -203,10 +194,10 @@ contract Orchestrator_test_unit_revert_Funds is Constants {
 
         vm.startPrank(ARTIST_1.Address);
         vm.expectRevert(ErrorsLib.InsufficientBalance.selector);
-        orchestrator.withdrawFunds(true, ARTIST_1_ID, withdrawAmount);
+        orchestrator.withdrawFunds(ARTIST_1_ID, withdrawAmount);
         vm.stopPrank();
 
-        uint256 artistBalanceAfterWithdraw = artistDB
+        uint256 artistBalanceAfterWithdraw = userDB
             .getMetadata(ARTIST_1_ID)
             .Balance;
         assertEq(

@@ -331,7 +331,7 @@ contract UserDB_test_fuzz is Constants {
         );
     }
 
-        function test_fuzz_ArtistDB__addAccumulatedRoyalties(uint256 amount) public {
+        function test_fuzz_UserDB__addAccumulatedRoyalties(uint256 amount) public {
         vm.startPrank(FAKE_ORCHESTRATOR.Address);
         uint256 assignedId = userDB.register(
             "Artist Name",
@@ -348,7 +348,7 @@ contract UserDB_test_fuzz is Constants {
         );
     }
 
-    function test_fuzz_ArtistDB__deductAccumulatedRoyalties(uint256 amount, uint256 deductAmount) public {
+    function test_fuzz_UserDB__deductAccumulatedRoyalties(uint256 amount, uint256 deductAmount) public {
         vm.assume(deductAmount <= amount);
         vm.startPrank(FAKE_ORCHESTRATOR.Address);
         uint256 assignedId = userDB.register(

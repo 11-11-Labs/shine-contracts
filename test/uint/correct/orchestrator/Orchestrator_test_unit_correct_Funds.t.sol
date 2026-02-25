@@ -11,19 +11,16 @@ contract Orchestrator_test_unit_correct_Funds is Constants {
     uint256 WILDCARD_USER_ID;
     function executeBeforeSetUp() internal override {
         ARTIST_1_ID = _execute_orchestrator_register(
-            true,
             "initial_artist",
             "https://arweave.net/initialArtistURI",
             ARTIST_1.Address
         );
         USER_ID = _execute_orchestrator_register(
-            false,
             "initial_user",
             "https://arweave.net/initialUserURI",
             USER.Address
         );
         WILDCARD_USER_ID = _execute_orchestrator_register(
-            false,
             "wildcard_user",
             "https://arweave.net/wildcardUserURI",
             WILDCARD_ACCOUNT.Address
@@ -72,7 +69,7 @@ contract Orchestrator_test_unit_correct_Funds is Constants {
         orchestrator.makeDonation(USER_ID, ARTIST_1_ID, donationAmount);
         vm.stopPrank();
 
-        uint256 artistBalance = artistDB.getMetadata(ARTIST_1_ID).Balance;
+        uint256 artistBalance = userDB.getMetadata(ARTIST_1_ID).Balance;
         assertEq(
             artistBalance,
             donationAmount,
@@ -120,10 +117,10 @@ contract Orchestrator_test_unit_correct_Funds is Constants {
         uint256 withdrawAmount = 10_000_000; // 10 USDC with 6 decimals
 
         vm.startPrank(ARTIST_1.Address);
-        orchestrator.withdrawFunds(true, ARTIST_1_ID, withdrawAmount);
+        orchestrator.withdrawFunds( ARTIST_1_ID, withdrawAmount);
         vm.stopPrank();
 
-        uint256 artistBalanceAfterWithdraw = artistDB.getMetadata(ARTIST_1_ID).Balance;
+        uint256 artistBalanceAfterWithdraw = userDB.getMetadata(ARTIST_1_ID).Balance;
         assertEq(
             artistBalanceAfterWithdraw,
             20_000_000,

@@ -17,32 +17,28 @@ contract Orchestrator_test_unit_revert_Song is Constants {
 
     function executeBeforeSetUp() internal override {
         ARTIST_1_ID = _execute_orchestrator_register(
-            true,
             "initial_artist",
             "https://arweave.net/initialArtistURI",
             ARTIST_1.Address
         );
         ARTIST_2_ID = _execute_orchestrator_register(
-            true,
             "second_artist",
             "https://arweave.net/secondArtistURI",
             ARTIST_2.Address
         );
         ARTIST_3_ID = _execute_orchestrator_register(
-            true,
             "third_artist",
             "https://arweave.net/thirdArtistURI",
             ARTIST_3.Address
         );
         USER_ID = _execute_orchestrator_register(
-            false,
             "initial_user",
             "https://arweave.net/initialUserURI",
             USER.Address
         );
     }
 
-    function test_unit_revert_registerSong_ArtistIdDoesNotExist() public {
+    function test_unit_revert_registerSong_UserIdDoesNotExist() public {
         vm.startPrank(ARTIST_1.Address);
 
         uint256[] memory artistIDs = new uint256[](2);
@@ -51,7 +47,7 @@ contract Orchestrator_test_unit_revert_Song is Constants {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ErrorsLib.ArtistIdDoesNotExist.selector,
+                ErrorsLib.UserIdDoesNotExist.selector,
                 1000000010000001
             )
         );
@@ -90,7 +86,7 @@ contract Orchestrator_test_unit_revert_Song is Constants {
         vm.stopPrank();
     }
 
-    function test_unit_revert_changeSongFullData_AddressIsNotOwnerOfArtistId()
+    function test_unit_revert_changeSongFullData_AddressIsNotOwnerOfUserId()
         public
     {
         uint256[] memory initialArtistIDs = new uint256[](1);
@@ -111,7 +107,7 @@ contract Orchestrator_test_unit_revert_Song is Constants {
         uint256[] memory newArtistIDs = new uint256[](2);
         newArtistIDs[0] = ARTIST_2_ID;
         newArtistIDs[1] = ARTIST_3_ID;
-        vm.expectRevert(ErrorsLib.AddressIsNotOwnerOfArtistId.selector);
+        vm.expectRevert(ErrorsLib.AddressIsNotOwnerOfUserId.selector);
         orchestrator.changeSongFullData(
             songID,
             "Updated Song",
@@ -124,7 +120,7 @@ contract Orchestrator_test_unit_revert_Song is Constants {
         vm.stopPrank();
     }
 
-    function test_unit_revert_changeSongFullData_ArtistIdDoesNotExist() public {
+    function test_unit_revert_changeSongFullData_UserIdDoesNotExist() public {
         uint256[] memory initialArtistIDs = new uint256[](1);
         initialArtistIDs[0] = ARTIST_2_ID;
 
@@ -145,7 +141,7 @@ contract Orchestrator_test_unit_revert_Song is Constants {
         newArtistIDs[1] = 77777777777;
         vm.expectRevert(
             abi.encodeWithSelector(
-                ErrorsLib.ArtistIdDoesNotExist.selector,
+                ErrorsLib.UserIdDoesNotExist.selector,
                 77777777777
             )
         );
@@ -194,7 +190,7 @@ contract Orchestrator_test_unit_revert_Song is Constants {
     }
 
 
-    function test_unit_revert_changeSongPrice_AddressIsNotOwnerOfArtistId() public {
+    function test_unit_revert_changeSongPrice_AddressIsNotOwnerOfUserId() public {
         uint256[] memory artistIDs = new uint256[](1);
         artistIDs[0] = ARTIST_2_ID;
 
@@ -210,7 +206,7 @@ contract Orchestrator_test_unit_revert_Song is Constants {
         );
 
         vm.startPrank(ARTIST_2.Address);
-        vm.expectRevert(ErrorsLib.AddressIsNotOwnerOfArtistId.selector);
+        vm.expectRevert(ErrorsLib.AddressIsNotOwnerOfUserId.selector);
         orchestrator.changeSongPrice(songID, 2000);
         vm.stopPrank();
     }
@@ -219,7 +215,7 @@ contract Orchestrator_test_unit_revert_Song is Constants {
     
     
 
-    function test_unit_revert_changeSongPurchaseability_AddressIsNotOwnerOfArtistId() public {
+    function test_unit_revert_changeSongPurchaseability_AddressIsNotOwnerOfUserId() public {
         uint256[] memory artistIDs = new uint256[](1);
         artistIDs[0] = ARTIST_2_ID;
 
@@ -235,7 +231,7 @@ contract Orchestrator_test_unit_revert_Song is Constants {
         );
 
         vm.startPrank(ARTIST_2.Address);
-        vm.expectRevert(ErrorsLib.AddressIsNotOwnerOfArtistId.selector);
+        vm.expectRevert(ErrorsLib.AddressIsNotOwnerOfUserId.selector);
         orchestrator.changeSongPurchaseability(songID, false);
         vm.stopPrank();
     }
@@ -292,7 +288,7 @@ contract Orchestrator_test_unit_revert_Song is Constants {
         );
 
         assertEq(
-            artistDB.getMetadata(ARTIST_1_ID).Balance,
+            userDB.getMetadata(ARTIST_1_ID).Balance,
             netPrice,
             "Principal artist's balance should be updated"
         );
@@ -363,7 +359,7 @@ contract Orchestrator_test_unit_revert_Song is Constants {
         );
 
         assertEq(
-            artistDB.getMetadata(ARTIST_1_ID).Balance,
+            userDB.getMetadata(ARTIST_1_ID).Balance,
             netPrice + extraAmount,
             "Principal artist's balance should be updated"
         );
@@ -424,7 +420,7 @@ contract Orchestrator_test_unit_revert_Song is Constants {
         );
 
         assertEq(
-            artistDB.getMetadata(ARTIST_1_ID).Balance,
+            userDB.getMetadata(ARTIST_1_ID).Balance,
             0,
             "Principal artist's balance should be unchanged after gifting"
         );

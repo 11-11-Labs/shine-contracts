@@ -14,14 +14,12 @@ contract Orchestrator_test_unit_correct_Administrative is Constants {
     uint256 ARTIST_3_ID;
     function executeBeforeSetUp() internal override {
         ARTIST_1_ID = _execute_orchestrator_register(
-            true,
             "initial_artist",
             "https://arweave.net/initialArtistURI",
             ARTIST_1.Address
         );
 
         USER_ID = _execute_orchestrator_register(
-            false,
             "initial_user",
             "https://arweave.net/initialUserURI",
             USER.Address
@@ -168,9 +166,9 @@ contract Orchestrator_test_unit_correct_Administrative is Constants {
             "AlbumDB owner should be updated to new orchestrator"
         );
         assertEq(
-            artistDB.owner(),
+            userDB.owner(),
             address(7878),
-            "ArtistDB owner should be updated to new orchestrator"
+            "UserDB owner should be updated to new orchestrator"
         );
         assertEq(
             songDB.owner(),
@@ -216,7 +214,7 @@ contract Orchestrator_test_unit_correct_Administrative is Constants {
 
 
     function test_unit_correct_giveCollectedFeesToArtist() public {
-        uint256 initialArtistBalance = artistDB.getBalance(ARTIST_1_ID);
+        uint256 initialArtistBalance = userDB.getBalance(ARTIST_1_ID);
 
         vm.startPrank(ADMIN.Address);
 
@@ -230,7 +228,7 @@ contract Orchestrator_test_unit_correct_Administrative is Constants {
         uint256 feesAccumulatedAfter = orchestrator.getAmountCollectedInFees();
         vm.stopPrank();
 
-        uint256 finalArtistBalance = artistDB.getBalance(ARTIST_1_ID);
+        uint256 finalArtistBalance = userDB.getBalance(ARTIST_1_ID);
 
         assertGt(
             finalArtistBalance,

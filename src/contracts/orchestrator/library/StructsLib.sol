@@ -22,13 +22,11 @@ library StructsLib {
     /**
      * @notice Stores the contract addresses of all database contracts
      * @param album Address of the AlbumDB contract
-     * @param artist Address of the ArtistDB contract
      * @param song Address of the SongDB contract
      * @param user Address of the UserDB contract
      */
     struct DataBaseList {
         address album;
-        address artist;
         address song;
         address user;
     }
