@@ -7,12 +7,14 @@ import {AlbumDB} from "@shine/contracts/database/AlbumDB.sol";
 import {SongDB} from "@shine/contracts/database/SongDB.sol";
 import {UserDB} from "@shine/contracts/database/UserDB.sol";
 import {Orchestrator} from "@shine/contracts/orchestrator/Orchestrator.sol";
+import {SplitterDB} from "@shine/contracts/database/SplitterDB.sol";
 
 abstract contract Constants is Test {
     ///@dev this are the contract instances used in separate tests
     AlbumDB _albumDB;
     SongDB _songDB;
     UserDB _userDB;
+    SplitterDB _splitterDB; 
 
     ///@dev these are the contract instances used in conjunction with orchestrator
     AlbumDB albumDB;

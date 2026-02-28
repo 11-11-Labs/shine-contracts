@@ -35,12 +35,10 @@ contract SplitterDB is Ownable {
     /**
      * @notice Stores split configuration for a single recipient
      * @dev Each entry represents one recipient's share of revenue
-     * @param isArtistId True if the recipient is an artist, false if it's a user
-     * @param id The unique identifier of the recipient (artist ID or user ID)
+     * @param id The unique identifier of the recipient (user ID)
      * @param splitBasisPoints The recipient's share in basis points (1 bp = 0.01%)
      */
     struct Metadata {
-        bool isArtistId;
         uint256 id;
         uint256 splitBasisPoints;
     }
@@ -48,12 +46,10 @@ contract SplitterDB is Ownable {
     /**
      * @notice Stores calculated split amounts for distribution
      * @dev Returned by calculateSplit to show actual amounts each recipient receives
-     * @param isArtistId True if the recipient is an artist, false if it's a user
-     * @param id The unique identifier of the recipient (0 indicates principal artist)
+     * @param id The unique identifier of the recipient (0 indicates principal user)
      * @param amountToReceive The calculated amount in wei or token units for this recipient
      */
     struct ReturnCalculation {
-        bool isArtistId;
         uint256 id;
         uint256 amountToReceive;
     }
@@ -216,8 +212,7 @@ contract SplitterDB is Ownable {
                 1
             );
             calculations[0] = ReturnCalculation({
-                    isArtistId: true,
-                    id: 0,
+                id: 0,
                 amountToReceive: amount
             });
             return calculations;
@@ -230,7 +225,6 @@ contract SplitterDB is Ownable {
             );
             for (uint256 i; i < splitMetadata.length; ) {
                 calculations[i] = ReturnCalculation({
-                    isArtistId: splitMetadata[i].isArtistId,
                     id: splitMetadata[i].id,
                     amountToReceive: (amount *
                         splitMetadata[i].splitBasisPoints) / MAX_BASIC_POINTS
