@@ -54,7 +54,7 @@ contract AlbumDB_test_fuzz is Constants {
             "Album title should match"
         );
         assertEq(
-            albumDB.getMetadata(assignedId).PrincipalUserId,
+            albumDB.getMetadata(assignedId).PrincipalArtistId,
             inputs.principalUserId,
             "Principal artist ID should match"
         );
@@ -281,7 +281,7 @@ contract AlbumDB_test_fuzz is Constants {
             "Album title should be updated"
         );
         assertEq(
-            albumDB.getMetadata(assignedId).PrincipalUserId,
+            albumDB.getMetadata(assignedId).PrincipalArtistId,
             inputs.principalUserId,
             "Principal artist ID should be updated"
         );

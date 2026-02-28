@@ -83,7 +83,7 @@ contract Orchestrator_test_unit_correct_Funds is Constants {
         uint256 withdrawAmount = 15_000_000; // 15 USDC with 6 decimals
 
         vm.startPrank(USER.Address);
-        orchestrator.withdrawFunds(false, USER_ID, withdrawAmount);
+        orchestrator.withdrawFunds( USER_ID, withdrawAmount);
         vm.stopPrank();
 
         uint256 userBalanceAfterWithdraw = userDB.getMetadata(USER_ID).Balance;

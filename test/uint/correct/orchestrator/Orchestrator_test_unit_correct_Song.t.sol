@@ -63,7 +63,7 @@ contract Orchestrator_test_unit_correct_Song is Constants {
         SongDB.Metadata memory song = songDB.getMetadata(songID);
         assertEq(song.Title, "Song Title", "Song title should match");
         assertEq(
-            song.PrincipalUserId,
+            song.PrincipalArtistId,
             ARTIST_1_ID,
             "Principal artist ID should match"
         );
@@ -121,7 +121,7 @@ contract Orchestrator_test_unit_correct_Song is Constants {
         SongDB.Metadata memory song = songDB.getMetadata(songID);
         assertEq(song.Title, "Updated Song", "Updated song title should match");
         assertEq(
-            song.PrincipalUserId,
+            song.PrincipalArtistId,
             ARTIST_1_ID,
             "Principal artist ID should match"
         );

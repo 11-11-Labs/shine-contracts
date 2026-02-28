@@ -31,7 +31,7 @@ contract SongDB_test_unit_revert is Constants {
         vm.stopPrank();
 
         assertEq(
-            _songDB.getMetadata(1).PrincipalUserId,
+            _songDB.getMetadata(1).PrincipalArtistId,
             0,
             "Song principalUserId should be 0 as registration failed"
         );

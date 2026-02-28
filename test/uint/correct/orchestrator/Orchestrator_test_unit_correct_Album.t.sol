@@ -78,7 +78,7 @@ contract Orchestrator_test_unit_correct_Album is Constants {
 
         assertEq(metadata.Title, "Initial Album", "Album title mismatch");
         assertEq(
-            metadata.PrincipalUserId,
+            metadata.PrincipalArtistId,
             ARTIST_ID,
             "Album principal artist ID mismatch"
         );
