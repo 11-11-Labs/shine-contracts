@@ -6,7 +6,7 @@ import "testing/Constants.sol";
 
 import {UserDB} from "@shine/contracts/database/UserDB.sol";
 
-contract Orchestrator_test_unit_correct_UserArtist is Constants {
+contract Orchestrator_test_unit_correct_User is Constants {
     function test_unit_correct_register_user() public {
         vm.startPrank(USER.Address);
         uint256 userId = orchestrator.register(
