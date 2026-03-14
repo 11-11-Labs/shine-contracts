@@ -333,7 +333,11 @@ contract Orchestrator is Ownable {
     function setSplitOfSong(
         uint256 songId,
         SplitterDB.Metadata[] calldata splitMetadata
-    ) external senderIsUserId(songDB.getPrincipalArtistId(songId)) {
+    )
+        external
+        senderIsUserId(songDB.getPrincipalArtistId(songId))
+        songIdExists(songId)
+    {
         splitterDB.set(false, songId, splitMetadata);
     }
 
@@ -572,7 +576,7 @@ contract Orchestrator is Ownable {
         uint256 albumId,
         uint256 toUserId
     ) external senderIsUserId(albumDB.getPrincipalArtistId(albumId)) {
-        uint[] memory listOfSong = albumDB.gift(albumId, toUserId);
+        uint256[] memory listOfSong = albumDB.gift(albumId, toUserId);
         userDB.addSongs(toUserId, listOfSong);
 
         emit EventsLib.AlbumGifted(albumId, toUserId);
