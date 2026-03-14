@@ -105,7 +105,7 @@ contract SplitterDB is Ownable {
 
     //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 External Functions 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋
     /**
-     * @notice Registers a new split configuration for a song or album
+     * @notice Registers or changes a split configuration for a song or album
      * @dev Only callable by the Orchestrator (owner). Validates that:
      *      - Split metadata array is not empty
      *      - No entry has zero basis points
@@ -114,10 +114,10 @@ contract SplitterDB is Ownable {
      * @param id The unique identifier of the entity to configure splits for
      * @param splitMetadata Array of Metadata structs defining each recipient's share
      */
-    function register(
+    function set(
         bool isAlbumId,
         uint256 id,
-        Metadata[] memory splitMetadata
+        Metadata[] calldata splitMetadata
     ) external onlyOwner {
         if (splitMetadata.length == 0) revert DataIsEmpty();
         uint256 totalBasisPoints;
@@ -137,45 +137,6 @@ contract SplitterDB is Ownable {
         splits[isAlbumId ? IdType.Song : IdType.User][id] = splitMetadata;
 
         emit Registered(isAlbumId ? IdType.Song : IdType.User, id);
-    }
-
-    /**
-     * @notice Updates an existing split configuration
-     * @dev Only callable by the Orchestrator (owner). Validates that:
-     *      - A split configuration already exists for this entity
-     *      - New split metadata array is not empty
-     *      - No entry has zero basis points
-     *      - Total basis points equals exactly MAX_BASIC_POINTS (10000)
-     * @param isAlbumId True if updating for an album/song, false for a user
-     * @param id The unique identifier of the entity to update splits for
-     * @param splitMetadata Array of Metadata structs defining each recipient's new share
-     */
-    function change(
-        bool isAlbumId,
-        uint256 id,
-        Metadata[] memory splitMetadata
-    ) external onlyOwner {
-        if (splits[isAlbumId ? IdType.Song : IdType.User][id].length == 0)
-            revert DataIsEmpty();
-
-        if (splitMetadata.length == 0) revert DataIsEmpty();
-        uint256 totalBasisPoints;
-        for (uint256 i; i < splitMetadata.length; ) {
-            if (splitMetadata[i].splitBasisPoints == 0)
-                revert SplitBasisPointsCannotBeZero();
-            totalBasisPoints += splitMetadata[i].splitBasisPoints;
-            if (totalBasisPoints > MAX_BASIC_POINTS)
-                revert TotalBasisPointsExceed();
-            unchecked {
-                ++i;
-            }
-        }
-        if (totalBasisPoints != MAX_BASIC_POINTS)
-            revert MustSumToMaxBasisPoints();
-
-        splits[isAlbumId ? IdType.Song : IdType.User][id] = splitMetadata;
-
-        emit Changed(isAlbumId ? IdType.Song : IdType.User, id);
     }
 
     //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 Getter Functions 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋

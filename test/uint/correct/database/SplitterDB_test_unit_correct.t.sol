@@ -11,7 +11,7 @@ contract SplitterDB_test_unit_correct is Constants {
         _splitterDB = new SplitterDB(FAKE_ORCHESTRATOR.Address);
     }
 
-    function test_unit_correct_SplitterDB__register() public {
+    function test_unit_correct_SplitterDB__set() public {
         SplitterDB.Metadata[] memory splitMetadata = new SplitterDB.Metadata[](
             3
         );
@@ -20,7 +20,7 @@ contract SplitterDB_test_unit_correct is Constants {
         splitMetadata[2] = SplitterDB.Metadata({id: 3, splitBasisPoints: 2000});
 
         vm.startPrank(FAKE_ORCHESTRATOR.Address);
-        _splitterDB.register(true, 1, splitMetadata);
+        _splitterDB.set(true, 1, splitMetadata);
         vm.stopPrank();
 
         SplitterDB.Metadata[] memory returnedMetadata = _splitterDB.getSplits(
@@ -52,7 +52,7 @@ contract SplitterDB_test_unit_correct is Constants {
         );
     }
 
-    function test_unit_correct_SplitterDB__change() public {
+    function test_unit_correct_SplitterDB__set_updateExistingSplit() public {
         SplitterDB.Metadata[] memory splitMetadata = new SplitterDB.Metadata[](
             3
         );
@@ -61,15 +61,15 @@ contract SplitterDB_test_unit_correct is Constants {
         splitMetadata[2] = SplitterDB.Metadata({id: 3, splitBasisPoints: 2000});
 
         vm.startPrank(FAKE_ORCHESTRATOR.Address);
-        _splitterDB.register(true, 1, splitMetadata);
+        _splitterDB.set(true, 1, splitMetadata);
         vm.stopPrank();
 
-        // change the splits
+        // update the existing splits using set
         splitMetadata[0] = SplitterDB.Metadata({id: 1, splitBasisPoints: 4000});
         splitMetadata[1] = SplitterDB.Metadata({id: 2, splitBasisPoints: 4000});
         splitMetadata[2] = SplitterDB.Metadata({id: 3, splitBasisPoints: 2000});
-        vm.startPrank(FAKE_ORCHESTRATOR.Address);   
-        _splitterDB.change(true, 1, splitMetadata);
+        vm.startPrank(FAKE_ORCHESTRATOR.Address);
+        _splitterDB.set(true, 1, splitMetadata);
         vm.stopPrank();
         SplitterDB.Metadata[] memory returnedMetadata = _splitterDB.getSplits(
             true,

@@ -304,9 +304,13 @@ contract Orchestrator is Ownable {
         uint256 price
     ) external senderIsUserId(songDB.getPrincipalArtistId(id)) {
         if (artistIDs.length > 0) {
-            for (uint256 i = 0; i < artistIDs.length; i++) {
+            for (uint256 i = 0; i < artistIDs.length; ) {
                 if (!userDB.exists(artistIDs[i]))
                     revert ErrorsLib.UserIdDoesNotExist(artistIDs[i]);
+
+                unchecked {
+                    i++;
+                }
             }
         }
 

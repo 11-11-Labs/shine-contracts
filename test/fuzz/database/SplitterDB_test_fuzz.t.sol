@@ -18,7 +18,7 @@ contract SplitterDB_test_fuzz is Constants {
         uint8 seed;
     }
 
-    function test_fuzz_SplitterDB__register(
+    function test_fuzz_SplitterDB__set(
         RegisterInputs memory inputs
     ) public {
         uint256 numberOfRecipients = bound(inputs.seed, 1, 15);
@@ -52,7 +52,7 @@ contract SplitterDB_test_fuzz is Constants {
         }
 
         vm.startPrank(FAKE_ORCHESTRATOR.Address);
-        _splitterDB.register(inputs.isAlbumId, inputs.id, splitMetadata);
+        _splitterDB.set(inputs.isAlbumId, inputs.id, splitMetadata);
         vm.stopPrank();
 
         SplitterDB.Metadata[] memory returnedMetadata = _splitterDB.getSplits(
@@ -70,12 +70,12 @@ contract SplitterDB_test_fuzz is Constants {
             assertEq(
                 returnedMetadata[i].id,
                 splitMetadata[i].id,
-                "Returned metadata ID should match registered metadata ID"
+                "Returned metadata ID should match set metadata ID"
             );
             assertEq(
                 returnedMetadata[i].splitBasisPoints,
                 splitMetadata[i].splitBasisPoints,
-                "Returned metadata split basis points should match registered metadata split basis points"
+                "Returned metadata split basis points should match set metadata split basis points"
             );
             unchecked {
                 ++i;
@@ -83,12 +83,12 @@ contract SplitterDB_test_fuzz is Constants {
         }
     }
 
-    function test_fuzz_SplitterDB__change(
-        RegisterInputs memory registerInputs,
-        RegisterInputs memory changeInputs
+    function test_fuzz_SplitterDB__set_updateExistingSplit(
+        RegisterInputs memory firstInputs,
+        RegisterInputs memory secondInputs
     ) public {
-        // First register splits with the first set of inputs
-        uint256 numberOfRecipients = bound(registerInputs.seed, 1, 15);
+        // First set of splits
+        uint256 numberOfRecipients = bound(firstInputs.seed, 1, 15);
         uint256[] memory splitBasisPoints = new uint256[](numberOfRecipients);
         uint256 totalBasisPoints;
         for (uint256 i; i < numberOfRecipients; ) {
@@ -117,15 +117,15 @@ contract SplitterDB_test_fuzz is Constants {
             }
         }
         vm.startPrank(FAKE_ORCHESTRATOR.Address);
-        _splitterDB.register(
-            registerInputs.isAlbumId,
-            registerInputs.id,
+        _splitterDB.set(
+            firstInputs.isAlbumId,
+            firstInputs.id,
             splitMetadata
         );
         vm.stopPrank();
 
-        // Then change splits with the second set of inputs
-        uint256 numberOfChangeRecipients = bound(changeInputs.seed, 1, 15);
+        // Second set of splits (update existing)
+        uint256 numberOfChangeRecipients = bound(secondInputs.seed, 1, 15);
         uint256[] memory splitBasisPointsChange = new uint256[](numberOfChangeRecipients);
         uint256 totalBasisPointsChange = 0;
         for (uint256 i; i < numberOfChangeRecipients; ) {
@@ -151,15 +151,15 @@ contract SplitterDB_test_fuzz is Constants {
             }
         }
         vm.startPrank(FAKE_ORCHESTRATOR.Address);
-        _splitterDB.change(
-            registerInputs.isAlbumId,
-            registerInputs.id,
+        _splitterDB.set(
+            firstInputs.isAlbumId,
+            firstInputs.id,
             splitChangeMetadata
         );
         vm.stopPrank();
         SplitterDB.Metadata[] memory returnedMetadata = _splitterDB.getSplits(
-            registerInputs.isAlbumId,
-            registerInputs.id
+            firstInputs.isAlbumId,
+            firstInputs.id
         );
         assertEq(
             returnedMetadata.length,
@@ -170,12 +170,12 @@ contract SplitterDB_test_fuzz is Constants {
             assertEq(
                 returnedMetadata[i].id,
                 splitChangeMetadata[i].id,
-                "Returned metadata ID should match changed metadata ID"
+                "Returned metadata ID should match updated metadata ID"
             );
             assertEq(
                 returnedMetadata[i].splitBasisPoints,
                 splitChangeMetadata[i].splitBasisPoints,
-                "Returned metadata split basis points should match changed metadata split basis points"
+                "Returned metadata split basis points should match updated metadata split basis points"
             );
             unchecked {
                 ++i;
