@@ -236,11 +236,11 @@ contract SongDB is IdUtils, Ownable {
      * @return The newly assigned song ID
      */
     function register(
-        string memory title,
+        string calldata title,
         uint256 principalArtistId,
-        uint256[] memory artistIDs,
-        string memory mediaURI,
-        string memory metadataURI,
+        uint256[] calldata artistIDs,
+        string calldata mediaURI,
+        string calldata metadataURI,
         bool canBePurchased,
         uint256 price
     ) external onlyOwner returns (uint256) {
@@ -382,11 +382,11 @@ contract SongDB is IdUtils, Ownable {
      */
     function change(
         uint256 id,
-        string memory title,
+        string calldata title,
         uint256 principalArtistId,
-        uint256[] memory artistIDs,
-        string memory mediaURI,
-        string memory metadataURI,
+        uint256[] calldata artistIDs,
+        string calldata mediaURI,
+        string calldata metadataURI,
         bool canBePurchased,
         uint256 price
     )

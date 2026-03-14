@@ -206,8 +206,8 @@ contract UserDB is IdUtils, Ownable {
      * @return The newly assigned user ID
      */
     function register(
-        string memory username,
-        string memory metadataURI,
+        string calldata username,
+        string calldata metadataURI,
         address userAddress
     ) external onlyOwner returns (uint256) {
         uint256 idAssigned = _getNextId();
@@ -238,8 +238,8 @@ contract UserDB is IdUtils, Ownable {
      */
     function changeBasicData(
         uint256 id,
-        string memory username,
-        string memory metadataURI
+        string calldata username,
+        string calldata metadataURI
     ) external onlyOwner onlyIfExist(id) onlyIfNotBanned(id) {
         if (bytes(username).length == 0) revert UsernameIsEmpty();
 

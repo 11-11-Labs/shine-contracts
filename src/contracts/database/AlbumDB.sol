@@ -236,14 +236,14 @@ contract AlbumDB is IdUtils, Ownable {
      * @return The newly assigned album ID
      */
     function register(
-        string memory title,
+        string calldata title,
         uint256 principalArtistId,
-        string memory metadataURI,
-        uint256[] memory songIDs,
+        string calldata metadataURI,
+        uint256[] calldata songIDs,
         uint256 price,
         bool canBePurchased,
         bool isASpecialEdition,
-        string memory specialEditionName,
+        string calldata specialEditionName,
         uint256 maxSupplySpecialEdition
     ) external onlyOwner returns (uint256) {
         uint256 idAssigned = _getNextId();
@@ -421,14 +421,14 @@ contract AlbumDB is IdUtils, Ownable {
      */
     function change(
         uint256 id,
-        string memory title,
+        string calldata title,
         uint256 principalArtistId,
-        string memory metadataURI,
-        uint256[] memory musicIds,
+        string calldata metadataURI,
+        uint256[] calldata musicIds,
         uint256 price,
         bool canBePurchased,
         bool isASpecialEdition,
-        string memory specialEditionName,
+        string calldata specialEditionName,
         uint256 maxSupplySpecialEdition
     ) external onlyOwner onlyIfNotBanned(id) onlyIfExist(id) {
         if (musicIds.length == 0) revert AlbumCannotHaveZeroSongs();
