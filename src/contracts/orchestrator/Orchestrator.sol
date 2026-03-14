@@ -26,6 +26,7 @@ import {EventsLib} from "@shine/contracts/orchestrator/library/EventsLib.sol";
 import {SongDB} from "@shine/contracts/database/SongDB.sol";
 import {AlbumDB} from "@shine/contracts/database/AlbumDB.sol";
 import {UserDB} from "@shine/contracts/database/UserDB.sol";
+import {SplitterDB} from "@shine/contracts/database/SplitterDB.sol";
 
 contract Orchestrator is Ownable {
     //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 State Variables 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋
@@ -52,6 +53,7 @@ contract Orchestrator is Ownable {
     SongDB private songDB;
     AlbumDB private albumDB;
     UserDB private userDB;
+    SplitterDB private splitterDB;
 
     //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 Modifiers 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋
 
@@ -121,8 +123,8 @@ contract Orchestrator is Ownable {
      * @return The newly assigned ID for the registered user
      */
     function register(
-        string memory name,
-        string memory metadataURI,
+        string calldata name,
+        string calldata metadataURI,
         address addressToUse
     ) external returns (uint256) {
         return userDB.register(name, metadataURI, addressToUse);
@@ -137,8 +139,8 @@ contract Orchestrator is Ownable {
      */
     function chnageBasicData(
         uint256 id,
-        string memory name,
-        string memory metadataURI
+        string calldata name,
+        string calldata metadataURI
     ) external {
         if (userDB.getAddress(id) != msg.sender)
             revert ErrorsLib.AddressIsNotOwnerOfUserId();
@@ -254,11 +256,11 @@ contract Orchestrator is Ownable {
      * @return The newly assigned song ID
      */
     function registerSong(
-        string memory title,
+        string calldata title,
         uint256 principalArtistId,
-        uint256[] memory artistIDs,
-        string memory mediaURI,
-        string memory metadataURI,
+        uint256[] calldata artistIDs,
+        string calldata mediaURI,
+        string calldata metadataURI,
         bool canBePurchased,
         uint256 netprice
     ) external senderIsUserId(principalArtistId) returns (uint256) {
@@ -296,10 +298,10 @@ contract Orchestrator is Ownable {
      */
     function changeSongFullData(
         uint256 id,
-        string memory title,
-        uint256[] memory artistIDs,
-        string memory mediaURI,
-        string memory metadataURI,
+        string calldata title,
+        uint256[] calldata artistIDs,
+        string calldata mediaURI,
+        string calldata metadataURI,
         bool canBePurchased,
         uint256 price
     ) external senderIsUserId(songDB.getPrincipalArtistId(id)) {
@@ -326,6 +328,13 @@ contract Orchestrator is Ownable {
             canBePurchased,
             price
         );
+    }
+
+    function setSplitOfSong(
+        uint256 songId,
+        SplitterDB.Metadata[] calldata splitMetadata
+    ) external senderIsUserId(songDB.getPrincipalArtistId(songId)) {
+        splitterDB.set(false, songId, splitMetadata);
     }
 
     /**
@@ -413,14 +422,14 @@ contract Orchestrator is Ownable {
      * @return The newly assigned album ID
      */
     function registerAlbum(
-        string memory title,
+        string calldata title,
         uint256 principalArtistId,
-        string memory metadataURI,
-        uint256[] memory songIDs,
+        string calldata metadataURI,
+        uint256[] calldata songIDs,
         uint256 price,
         bool canBePurchased,
         bool isASpecialEdition,
-        string memory specialEditionName,
+        string calldata specialEditionName,
         uint256 maxSupplySpecialEdition
     ) external senderIsUserId(principalArtistId) returns (uint256) {
         if (bytes(title).length == 0) revert ErrorsLib.TitleCannotBeEmpty();
@@ -470,13 +479,13 @@ contract Orchestrator is Ownable {
      */
     function changeAlbumFullData(
         uint256 id,
-        string memory title,
+        string calldata title,
         uint256 principalArtistId,
-        string memory metadataURI,
-        uint256[] memory musicIds,
+        string calldata metadataURI,
+        uint256[] calldata musicIds,
         uint256 price,
         bool canBePurchased,
-        string memory specialEditionName,
+        string calldata specialEditionName,
         uint256 maxSupplySpecialEdition
     ) external senderIsUserId(albumDB.getPrincipalArtistId(id)) {
         if (
@@ -582,7 +591,8 @@ contract Orchestrator is Ownable {
     function setDatabaseAddresses(
         address _dbalbum,
         address _dbsong,
-        address _dbuser
+        address _dbuser,
+        address _dbsplitter
     ) external onlyOwner {
         if (breaker.addressSetup != bytes1(0x00))
             revert ErrorsLib.AddressSetupAlreadyDone();
@@ -590,10 +600,12 @@ contract Orchestrator is Ownable {
         dbAddress.album = _dbalbum;
         dbAddress.song = _dbsong;
         dbAddress.user = _dbuser;
+        dbAddress.splitter = _dbsplitter;
 
         songDB = SongDB(_dbsong);
         albumDB = AlbumDB(_dbalbum);
         userDB = UserDB(_dbuser);
+        splitterDB = SplitterDB(_dbsplitter);
         breaker.addressSetup = bytes1(0x01);
     }
 
@@ -667,7 +679,7 @@ contract Orchestrator is Ownable {
         albumDB.transferOwnership(orchestratorAddressToMigrate);
         userDB.transferOwnership(orchestratorAddressToMigrate);
         songDB.transferOwnership(orchestratorAddressToMigrate);
-        userDB.transferOwnership(orchestratorAddressToMigrate);
+        splitterDB.transferOwnership(orchestratorAddressToMigrate);
 
         if (amountCollectedInFees > 0)
             IERC20(stablecoin.current).transfer(
