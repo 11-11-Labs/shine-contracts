@@ -513,6 +513,17 @@ contract Orchestrator is Ownable {
         );
     }
 
+    function setSplitOfAlbum(
+        uint256 albumId,
+        SplitterDB.Metadata[] calldata splitMetadata
+    )
+        external
+        senderIsUserId(albumDB.getPrincipalArtistId(albumId))
+        albumIdExists(albumId)
+    {
+        splitterDB.set(true, albumId, splitMetadata);
+    }
+
     /**
      * @notice Updates whether an album is available for purchase
      * @dev Only the principal artist can modify purchasability
