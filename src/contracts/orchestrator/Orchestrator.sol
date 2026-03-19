@@ -383,8 +383,9 @@ contract Orchestrator is Ownable {
 
         if (netPrice + extraAmount > 0)
             _executePayment(
+                false,
+                songId,
                 userID,
-                songDB.getPrincipalArtistId(songId),
                 netPrice,
                 extraAmount
             );
@@ -563,17 +564,20 @@ contract Orchestrator is Ownable {
         uint[] memory listOfSong = albumDB.purchase(albumId, userID);
         userDB.addSongs(userID, listOfSong);
 
+        uint256 netPrice = albumDB.getPrice(albumId);
+
         _executePayment(
+            true,
+            albumId,
             userID,
-            albumDB.getPrincipalArtistId(albumId),
-            albumDB.getPrice(albumId),
+            netPrice,
             extraAmount
         );
 
         emit EventsLib.AlbumPurchased(
             albumId,
             userID,
-            albumDB.getPrice(albumId)
+            netPrice
         );
     }
 
@@ -875,31 +879,62 @@ contract Orchestrator is Ownable {
 
     /**
      * @notice Internal function that processes payments for song/album purchases
-     * @dev Handles deduction from user balance, payment to artist, fee collection, and extra amounts (tips).
+     * @dev Handles deduction from user balance, revenue split distribution, fee collection, and extra amounts (tips).
+     *      Uses the SplitterDB to calculate revenue splits among multiple recipients if configured.
+     *      If no split is configured, pays directly to the principal artist.
      *      Reverts if user has insufficient balance for the total amount (price + fee + extra).
+     * @param isAlbum True if purchasing an album, false if purchasing a song
+     * @param id The album ID or song ID being purchased
      * @param userId The user ID making the purchase
-     * @param artistId The artist ID receiving payment
-     * @param netPrice The net price (before platform fees)
-     * @param extraAmount Optional tip amount going directly to the artist (no fees applied)
+     * @param netPrice The net price of the song/album (avoids redundant external call)
+     * @param extraAmount Optional tip amount included in the split distribution (no platform fees applied to this amount)
      */
     function _executePayment(
+        bool isAlbum,
+        uint256 id,
         uint256 userId,
-        uint256 artistId,
         uint256 netPrice,
         uint256 extraAmount
     ) internal {
-        uint256 userBalance = userDB.getBalance(userId);
         (uint256 totalPrice, uint256 calculatedFee) = getPriceWithFee(netPrice);
 
         uint256 totalToDeduct = totalPrice + extraAmount;
-        if (userBalance < totalToDeduct) revert ErrorsLib.InsufficientBalance();
-
         if (totalToDeduct > 0) {
+            if (userDB.getBalance(userId) < totalToDeduct)
+                revert ErrorsLib.InsufficientBalance();
+
+            uint256 artistAmount = netPrice + extraAmount;
+
+            SplitterDB.ReturnCalculation[] memory calculations = splitterDB
+                .calculateSplit(isAlbum, id, artistAmount);
+
             userDB.deductBalance(userId, totalToDeduct);
-            userDB.addBalance(artistId, netPrice + extraAmount);
+            if (calculations.length > 1) {
+                for (uint256 i = 0; i < calculations.length; ) {
+                    SplitterDB.ReturnCalculation memory calc = calculations[i];
+                    if (calc.amountToReceive > 0) {
+                        userDB.addBalance(
+                            calc.id,
+                            calc.amountToReceive
+                        );
+                    }
+                    unchecked {
+                        i++;
+                    }
+                }
+            } else {
+                uint256 recipientId = isAlbum
+                    ? albumDB.getPrincipalArtistId(id)
+                    : songDB.getPrincipalArtistId(id);
+                userDB.addBalance(recipientId, artistAmount);
+            }
         }
 
-        if (calculatedFee > 0) amountCollectedInFees += calculatedFee;
+        if (calculatedFee > 0) {
+            unchecked {
+                amountCollectedInFees += calculatedFee;
+            }
+        }
     }
 }
 
