@@ -45,6 +45,7 @@ library StructsLib {
         bool shopOperations;
         bool depositOperations;
         bool userRegistration;
+        bool contentRegistration;
     }
 
     //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 Stablecoin Management 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋

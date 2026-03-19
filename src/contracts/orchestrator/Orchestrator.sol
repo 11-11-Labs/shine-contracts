@@ -94,6 +94,29 @@ contract Orchestrator is Ownable {
         _;
     }
 
+    modifier checkShopBreaker() {
+        if (!breaker.shopOperations) revert ErrorsLib.ShopOperationsArePaused();
+        _;
+    }
+
+    modifier checkDepositBreaker() {
+        if (!breaker.depositOperations)
+            revert ErrorsLib.DepositOperationsArePaused();
+        _;
+    }
+
+    modifier checkUserRegistrationBreaker() {
+        if (!breaker.userRegistration)
+            revert ErrorsLib.UserRegistrationIsPaused();
+        _;
+    }
+
+    modifier checkContentRegistrationBreaker() {
+        if (!breaker.contentRegistration)
+            revert ErrorsLib.ContentRegistrationIsPaused();
+        _;
+    }
+
     //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 Constructor 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋
 
     /**
@@ -115,7 +138,8 @@ contract Orchestrator is Ownable {
             addressSetup: true,
             shopOperations: true,
             depositOperations: true,
-            userRegistration: true
+            userRegistration: true,
+            contentRegistration: true
         });
     }
 
@@ -132,7 +156,7 @@ contract Orchestrator is Ownable {
         string calldata name,
         string calldata metadataURI,
         address addressToUse
-    ) external returns (uint256) {
+    ) external checkUserRegistrationBreaker returns (uint256) {
         return userDB.register(name, metadataURI, addressToUse);
     }
 
@@ -172,20 +196,18 @@ contract Orchestrator is Ownable {
     /**
      * @notice Deposits stablecoin funds into a user's account balance
      * @dev Only the user owner can deposit into their own account. Requires prior token approval.
-     * @param userId The user ID to receive the deposited funds
      * @param amount The amount of stablecoin to deposit (in token units)
      */
-    function depositFunds(uint256 userId, uint256 amount) external {
-        if (userDB.getAddress(userId) != msg.sender)
-            revert ErrorsLib.AddressIsNotOwnerOfUserId();
-
+    function depositFunds(
+        uint256 amount
+    ) external checkDepositBreaker userIdExists(userDB.getId(msg.sender)) {
         IERC20(stablecoin.current).transferFrom(
             msg.sender,
             address(this),
             amount
         );
 
-        userDB.addBalance(userId, amount);
+        userDB.addBalance(userDB.getId(msg.sender), amount);
     }
 
     /**
@@ -197,7 +219,7 @@ contract Orchestrator is Ownable {
     function depositFundsToAnotherUser(
         uint256 toUserId,
         uint256 amount
-    ) external userIdExists(toUserId) {
+    ) external checkDepositBreaker userIdExists(toUserId) {
         IERC20(stablecoin.current).transferFrom(
             msg.sender,
             address(this),
@@ -269,7 +291,12 @@ contract Orchestrator is Ownable {
         string calldata metadataURI,
         bool canBePurchased,
         uint256 netprice
-    ) external senderIsUserId(principalArtistId) returns (uint256) {
+    )
+        external
+        checkContentRegistrationBreaker
+        senderIsUserId(principalArtistId)
+        returns (uint256)
+    {
         if (artistIDs.length > 0) {
             for (uint256 i = 0; i < artistIDs.length; i++) {
                 if (!userDB.exists(artistIDs[i]))
@@ -380,7 +407,10 @@ contract Orchestrator is Ownable {
      * @param songId The song ID to purchase
      * @param extraAmount Optional tip/extra amount beyond the song price (sent to artist)
      */
-    function purchaseSong(uint256 songId, uint256 extraAmount) external {
+    function purchaseSong(
+        uint256 songId,
+        uint256 extraAmount
+    ) external checkShopBreaker {
         uint256 userID = userDB.getId(msg.sender);
         songDB.purchase(songId, userID);
         userDB.addSong(userID, songId);
@@ -388,13 +418,7 @@ contract Orchestrator is Ownable {
         uint256 netPrice = songDB.getPrice(songId);
 
         if (netPrice + extraAmount > 0)
-            _executePayment(
-                false,
-                songId,
-                userID,
-                netPrice,
-                extraAmount
-            );
+            _executePayment(false, songId, userID, netPrice, extraAmount);
 
         emit EventsLib.SongPurchased(songId, userID, netPrice);
     }
@@ -442,7 +466,12 @@ contract Orchestrator is Ownable {
         bool isASpecialEdition,
         string calldata specialEditionName,
         uint256 maxSupplySpecialEdition
-    ) external senderIsUserId(principalArtistId) returns (uint256) {
+    )
+        external
+        checkContentRegistrationBreaker
+        senderIsUserId(principalArtistId)
+        returns (uint256)
+    {
         if (bytes(title).length == 0) revert ErrorsLib.TitleCannotBeEmpty();
 
         if (isASpecialEdition) {
@@ -564,7 +593,10 @@ contract Orchestrator is Ownable {
      * @param albumId The album ID to purchase
      * @param extraAmount Optional tip/extra amount beyond the album price (sent to artist)
      */
-    function purchaseAlbum(uint256 albumId, uint256 extraAmount) external {
+    function purchaseAlbum(
+        uint256 albumId,
+        uint256 extraAmount
+    ) external checkShopBreaker {
         uint256 userID = userDB.getId(msg.sender);
 
         uint[] memory listOfSong = albumDB.purchase(albumId, userID);
@@ -572,19 +604,9 @@ contract Orchestrator is Ownable {
 
         uint256 netPrice = albumDB.getPrice(albumId);
 
-        _executePayment(
-            true,
-            albumId,
-            userID,
-            netPrice,
-            extraAmount
-        );
+        _executePayment(true, albumId, userID, netPrice, extraAmount);
 
-        emit EventsLib.AlbumPurchased(
-            albumId,
-            userID,
-            netPrice
-        );
+        emit EventsLib.AlbumPurchased(albumId, userID, netPrice);
     }
 
     /**
@@ -619,8 +641,7 @@ contract Orchestrator is Ownable {
         address _dbuser,
         address _dbsplitter
     ) external onlyOwner {
-        if (!breaker.addressSetup)
-            revert ErrorsLib.AddressSetupAlreadyDone();
+        if (!breaker.addressSetup) revert ErrorsLib.AddressSetupAlreadyDone();
 
         dbAddress.album = _dbalbum;
         dbAddress.song = _dbsong;
@@ -919,10 +940,7 @@ contract Orchestrator is Ownable {
                 for (uint256 i = 0; i < calculations.length; ) {
                     SplitterDB.ReturnCalculation memory calc = calculations[i];
                     if (calc.amountToReceive > 0) {
-                        userDB.addBalance(
-                            calc.id,
-                            calc.amountToReceive
-                        );
+                        userDB.addBalance(calc.id, calc.amountToReceive);
                     }
                     unchecked {
                         i++;

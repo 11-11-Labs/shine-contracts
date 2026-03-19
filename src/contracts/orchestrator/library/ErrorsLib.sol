@@ -69,4 +69,19 @@ library ErrorsLib {
 
     /// @dev Thrown when attempting to execute a timelocked operation before the timelock expires
     error TimelockNotExpired();
+
+    //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 Breaker Errors 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋
+
+    /// @dev Thrown when shop operations are paused by the breaker
+    error ShopOperationsArePaused();
+
+    /// @dev Thrown when deposit operations are paused by the breaker
+    error DepositOperationsArePaused();
+
+    /// @dev Thrown when user registration is paused by the breaker
+    error UserRegistrationIsPaused();
+
+    /// @dev Thrown when content registration is paused by the breaker
+    error ContentRegistrationIsPaused();
+    
 }
