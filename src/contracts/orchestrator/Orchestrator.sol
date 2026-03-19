@@ -111,6 +111,12 @@ contract Orchestrator is Ownable {
         _initializeOwner(initialOwner);
         stablecoin.current = _stablecoinAddress;
         percentageFee = _percentageFee;
+        breaker = StructsLib.Breakers({
+            addressSetup: true,
+            shopOperations: true,
+            depositOperations: true,
+            userRegistration: true
+        });
     }
 
     //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 User/Artist Registration 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋
@@ -613,7 +619,7 @@ contract Orchestrator is Ownable {
         address _dbuser,
         address _dbsplitter
     ) external onlyOwner {
-        if (breaker.addressSetup != bytes1(0x00))
+        if (!breaker.addressSetup)
             revert ErrorsLib.AddressSetupAlreadyDone();
 
         dbAddress.album = _dbalbum;
@@ -625,7 +631,7 @@ contract Orchestrator is Ownable {
         albumDB = AlbumDB(_dbalbum);
         userDB = UserDB(_dbuser);
         splitterDB = SplitterDB(_dbsplitter);
-        breaker.addressSetup = bytes1(0x01);
+        breaker.addressSetup = false;
     }
 
     /**

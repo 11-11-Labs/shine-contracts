@@ -41,8 +41,10 @@ library StructsLib {
      * @param shop Flag for potential future operational control
      */
     struct Breakers {
-        bytes1 addressSetup;
-        bytes1 shop;
+        bool addressSetup;
+        bool shopOperations;
+        bool depositOperations;
+        bool userRegistration;
     }
 
     //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 Stablecoin Management 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋
