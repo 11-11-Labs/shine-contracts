@@ -841,7 +841,17 @@ contract Orchestrator is Ownable {
         bool isAlbum,
         uint256 id
     ) external view returns (SplitterDB.Metadata[] memory) {
-        return splitterDB.getSplits(isAlbum, id);
+        SplitterDB.Metadata[] memory split = splitterDB.getSplits(isAlbum, id);
+
+        if (split.length == 1)
+            split[0] = SplitterDB.Metadata({
+                id: isAlbum
+                    ? albumDB.getPrincipalArtistId(id)
+                    : songDB.getPrincipalArtistId(id),
+                splitBasisPoints: split[0].splitBasisPoints
+            });
+
+        return split;
     }
 
     /**
@@ -952,27 +962,30 @@ contract Orchestrator is Ownable {
             if (userDB.getBalance(userId) < totalToDeduct)
                 revert ErrorsLib.InsufficientBalance();
 
-            uint256 artistAmount = netPrice + extraAmount;
+            uint256 totalAmount = netPrice + extraAmount;
 
             SplitterDB.ReturnCalculation[] memory calculations = splitterDB
-                .calculateSplit(isAlbum, id, artistAmount);
+                .calculateSplit(isAlbum, id, totalAmount);
 
             userDB.deductBalance(userId, totalToDeduct);
             if (calculations.length > 1) {
                 for (uint256 i = 0; i < calculations.length; ) {
                     SplitterDB.ReturnCalculation memory calc = calculations[i];
-                    if (calc.amountToReceive > 0) {
+                    
+                    if (calc.amountToReceive > 0)
                         userDB.addBalance(calc.id, calc.amountToReceive);
-                    }
+
                     unchecked {
                         i++;
                     }
                 }
             } else {
-                uint256 recipientId = isAlbum
-                    ? albumDB.getPrincipalArtistId(id)
-                    : songDB.getPrincipalArtistId(id);
-                userDB.addBalance(recipientId, artistAmount);
+                userDB.addBalance(
+                    isAlbum
+                        ? albumDB.getPrincipalArtistId(id)
+                        : songDB.getPrincipalArtistId(id),
+                    totalAmount
+                );
             }
         }
 
