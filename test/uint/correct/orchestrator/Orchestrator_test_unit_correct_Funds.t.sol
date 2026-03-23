@@ -34,7 +34,7 @@ contract Orchestrator_test_unit_correct_Funds is Constants {
         _approveUsdc(USER.Address, address(orchestrator), depositAmount);
 
         vm.startPrank(USER.Address);
-        orchestrator.depositFunds(USER_ID, depositAmount);
+        orchestrator.depositFunds(depositAmount);
         vm.stopPrank();
 
         // Verify the balance in UserDB
@@ -63,7 +63,7 @@ contract Orchestrator_test_unit_correct_Funds is Constants {
     function test_unit_correct_makeDonation() public {
         uint256 donationAmount = 2_000_000; // 2 USDC with 6 decimals
 
-        _execute_orchestrator_depositFunds(USER_ID, USER.Address, donationAmount);
+        _execute_orchestrator_depositFunds( USER.Address, donationAmount);
 
         vm.startPrank(USER.Address);
         orchestrator.makeDonation(USER_ID, ARTIST_1_ID, donationAmount);
@@ -78,7 +78,7 @@ contract Orchestrator_test_unit_correct_Funds is Constants {
     }
 
     function test_unit_correct_withdrawFunds_user() public {
-        _execute_orchestrator_depositFunds(USER_ID, USER.Address,  20_000_000); // 20 USDC
+        _execute_orchestrator_depositFunds( USER.Address,  20_000_000); // 20 USDC
 
         uint256 withdrawAmount = 15_000_000; // 15 USDC with 6 decimals
 
@@ -106,7 +106,7 @@ contract Orchestrator_test_unit_correct_Funds is Constants {
 
         uint256 donationAmount = 30_000_000; // 30 USDC with 6 decimals
 
-        _execute_orchestrator_depositFunds(USER_ID, USER.Address, donationAmount);
+        _execute_orchestrator_depositFunds(USER.Address, donationAmount);
 
         vm.startPrank(USER.Address);
         orchestrator.makeDonation(USER_ID, ARTIST_1_ID, donationAmount);

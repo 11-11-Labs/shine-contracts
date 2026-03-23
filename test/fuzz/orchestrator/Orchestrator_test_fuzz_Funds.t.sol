@@ -32,7 +32,7 @@ contract Orchestrator_test_fuzz_Funds is Constants {
         _approveUsdc(USER.Address, address(orchestrator), depositAmount);
 
         vm.startPrank(USER.Address);
-        orchestrator.depositFunds(USER_ID, depositAmount);
+        orchestrator.depositFunds(depositAmount);
         vm.stopPrank();
 
         // Verify the balance in UserDB
@@ -66,7 +66,6 @@ contract Orchestrator_test_fuzz_Funds is Constants {
 
     function test_fuzz_makeDonation(uint112 donationAmount) public {
         _execute_orchestrator_depositFunds(
-            USER_ID,
             USER.Address,
             donationAmount
         );
@@ -89,7 +88,6 @@ contract Orchestrator_test_fuzz_Funds is Constants {
     ) public {
         vm.assume(withdrawAmount <= depositAmount);
         _execute_orchestrator_depositFunds(
-            USER_ID,
             USER.Address,
             depositAmount
         );
@@ -119,7 +117,6 @@ contract Orchestrator_test_fuzz_Funds is Constants {
         vm.assume(withdrawAmount <= donationAmount);
 
         _execute_orchestrator_depositFunds(
-            USER_ID,
             USER.Address,
             donationAmount
         );

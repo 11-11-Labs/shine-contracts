@@ -217,7 +217,7 @@ contract Orchestrator_test_unit_correct_Album is Constants {
             albumDB.getMetadata(albumID).Price
         );
 
-        _execute_orchestrator_depositFunds(USER_ID, USER.Address, totalPrice);
+        _execute_orchestrator_depositFunds(USER.Address, totalPrice);
 
         vm.startPrank(USER.Address);
         orchestrator.purchaseAlbum(albumID,0);
@@ -278,7 +278,6 @@ contract Orchestrator_test_unit_correct_Album is Constants {
         uint256 extraAmount = 500;
 
         _execute_orchestrator_depositFunds(
-            USER_ID,
             USER.Address,
             totalPrice + extraAmount
         );

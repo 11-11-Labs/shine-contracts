@@ -258,7 +258,7 @@ contract Orchestrator_test_unit_revert_Song is Constants {
         (uint256 totalPrice, uint256 calculatedFee) = orchestrator
             .getPriceWithFee(netPrice);
 
-        _execute_orchestrator_depositFunds(USER_ID, USER.Address, totalPrice);
+        _execute_orchestrator_depositFunds(USER.Address, totalPrice);
 
         vm.startPrank(USER.Address);
         orchestrator.purchaseSong(songID, 0);
@@ -326,7 +326,6 @@ contract Orchestrator_test_unit_revert_Song is Constants {
             .getPriceWithFee(netPrice);
 
         _execute_orchestrator_depositFunds(
-            USER_ID,
             USER.Address,
             totalPrice + extraAmount
         );

@@ -40,7 +40,7 @@ contract Orchestrator_test_unit_correct_Administrative is Constants {
 
         (uint256 totalPrice, ) = orchestrator.getPriceWithFee(netPrice);
 
-        _execute_orchestrator_depositFunds(USER_ID, USER.Address, totalPrice);
+        _execute_orchestrator_depositFunds(USER.Address, totalPrice);
 
         vm.startPrank(USER.Address);
         orchestrator.purchaseSong(songID, 0);

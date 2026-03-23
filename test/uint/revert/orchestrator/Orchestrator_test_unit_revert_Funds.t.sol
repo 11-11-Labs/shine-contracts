@@ -36,7 +36,7 @@ contract Orchestrator_test_unit_revert_Funds is Constants {
 
         vm.startPrank(USER.Address);
         vm.expectRevert(ERC20.InsufficientAllowance.selector);
-        orchestrator.depositFunds(USER_ID, depositAmount);
+        orchestrator.depositFunds(depositAmount);
         vm.stopPrank();
     }
 
@@ -47,19 +47,20 @@ contract Orchestrator_test_unit_revert_Funds is Constants {
 
         vm.startPrank(USER.Address);
         vm.expectRevert(ERC20.InsufficientBalance.selector);
-        orchestrator.depositFunds(USER_ID, depositAmount);
+        orchestrator.depositFunds(depositAmount);
         vm.stopPrank();
     }
 
-    function test_unit_revert_depositFunds_AddressIsNotOwnerOfUserId() public {
+    function test_unit_revert_depositFunds_AddressHasNotLinkedToUserId() public {
         uint256 depositAmount = 10_000_000; // 10 USDC with 6 decimals
 
-        _giveUsdc(USER.Address, depositAmount);
-        _approveUsdc(USER.Address, address(orchestrator), depositAmount);
+        address unregistered = address(0xdead);
+        _giveUsdc(unregistered, depositAmount);
+        _approveUsdc(unregistered, address(orchestrator), depositAmount);
 
-        vm.startPrank(WILDCARD_ACCOUNT.Address);
-        vm.expectRevert(ErrorsLib.AddressIsNotOwnerOfUserId.selector);
-        orchestrator.depositFunds(USER_ID, depositAmount);
+        vm.startPrank(unregistered);
+        vm.expectRevert(ErrorsLib.AddressHasNotLinkedToUserId.selector);
+        orchestrator.depositFunds(depositAmount);
         vm.stopPrank();
     }
 
@@ -102,7 +103,7 @@ contract Orchestrator_test_unit_revert_Funds is Constants {
     function test_unit_revert_withdrawFunds_user_AddressIsNotOwnerOfUserId()
         public
     {
-        _execute_orchestrator_depositFunds(USER_ID, USER.Address, 20_000_000); // 20 USDC
+        _execute_orchestrator_depositFunds(USER.Address, 20_000_000); // 20 USDC
 
         uint256 withdrawAmount = 15_000_000; // 15 USDC with 6 decimals
 
@@ -126,7 +127,7 @@ contract Orchestrator_test_unit_revert_Funds is Constants {
     }
 
     function test_unit_revert_withdrawFunds_user_InsufficientBalance() public {
-        _execute_orchestrator_depositFunds(USER_ID, USER.Address, 20_000_000); // 20 USDC
+        _execute_orchestrator_depositFunds(USER.Address, 20_000_000); // 20 USDC
 
         uint256 withdrawAmount = 25_000_000; // 25 USDC with 6 decimals
 
@@ -152,7 +153,7 @@ contract Orchestrator_test_unit_revert_Funds is Constants {
     function test_unit_revert_withdrawFunds_artist_AddressIsNotOwnerOfUserId()
         public
     {
-        _execute_orchestrator_depositFunds(USER_ID, USER.Address, 30_000_000); // 30 USDC
+        _execute_orchestrator_depositFunds(USER.Address, 30_000_000); // 30 USDC
 
         vm.startPrank(USER.Address);
         orchestrator.makeDonation(USER_ID, ARTIST_1_ID, 30_000_000);
@@ -184,7 +185,7 @@ contract Orchestrator_test_unit_revert_Funds is Constants {
     function test_unit_revert_withdrawFunds_artist_InsufficientBalance()
         public
     {
-        _execute_orchestrator_depositFunds(USER_ID, USER.Address, 20_000_000); // 20 USDC
+        _execute_orchestrator_depositFunds(USER.Address, 20_000_000); // 20 USDC
 
         vm.startPrank(USER.Address);
         orchestrator.makeDonation(USER_ID, ARTIST_1_ID, 20_000_000);
