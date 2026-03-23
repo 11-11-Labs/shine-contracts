@@ -20,6 +20,7 @@ abstract contract Constants is Test {
     AlbumDB albumDB;
     SongDB songDB;
     UserDB userDB;
+    SplitterDB splitterDB;
     Orchestrator orchestrator;
 
     MockUsdc usdc;
@@ -98,12 +99,14 @@ abstract contract Constants is Test {
         albumDB = new AlbumDB(address(orchestrator));
         songDB = new SongDB(address(orchestrator));
         userDB = new UserDB(address(orchestrator));
+        splitterDB = new SplitterDB(address(orchestrator));
 
         vm.startPrank(ADMIN.Address);
         orchestrator.setDatabaseAddresses(
             address(albumDB),
             address(songDB),
-            address(userDB)
+            address(userDB),
+            address(splitterDB)
         );
         vm.stopPrank();
 
@@ -142,7 +145,6 @@ abstract contract Constants is Test {
     }
 
     function _execute_orchestrator_depositFunds(
-        uint256 userId,
         address userAddress,
         uint256 amount
     ) internal virtual {
@@ -150,7 +152,7 @@ abstract contract Constants is Test {
         _approveUsdc(userAddress, address(orchestrator), amount);
 
         vm.startPrank(userAddress);
-        orchestrator.depositFunds(userId, amount);
+        orchestrator.depositFunds(amount);
         vm.stopPrank();
     }
 
