@@ -35,6 +35,9 @@ library ErrorsLib {
     /// @dev Thrown when referencing a song ID that does not exist
     error SongIdDoesNotExist(uint256 songId);
 
+    /// @dev Thrown when an addres has not linked to any user ID in the system
+    error AddressHasNotLinkedToUserId();
+
     //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 Content Registration Errors 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋
 
     /// @dev Thrown when a title parameter is empty or zero-length

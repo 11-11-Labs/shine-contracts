@@ -198,16 +198,17 @@ contract Orchestrator is Ownable {
      * @dev Only the user owner can deposit into their own account. Requires prior token approval.
      * @param amount The amount of stablecoin to deposit (in token units)
      */
-    function depositFunds(
-        uint256 amount
-    ) external checkDepositBreaker userIdExists(userDB.getId(msg.sender)) {
+    function depositFunds(uint256 amount) external checkDepositBreaker {
+        uint256 userId = userDB.getId(msg.sender);
+        if (userId == 0) revert ErrorsLib.AddressHasNotLinkedToUserId();
+
         IERC20(stablecoin.current).transferFrom(
             msg.sender,
             address(this),
             amount
         );
 
-        userDB.addBalance(userDB.getId(msg.sender), amount);
+        userDB.addBalance(userId, amount);
     }
 
     /**
@@ -899,7 +900,7 @@ contract Orchestrator is Ownable {
      * @return Version string
      */
     function version() external pure returns (string memory) {
-        return '0.0.1';
+        return "0.0.1";
     }
 
     //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 Internal Functions 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋
