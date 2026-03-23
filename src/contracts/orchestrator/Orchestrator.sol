@@ -832,6 +832,19 @@ contract Orchestrator is Ownable {
     }
 
     /**
+     * @notice Gets the revenue split configuration for a specific song or album
+     * @param isAlbum True to get splits for an album, false for a song
+     * @param id The ID of the album or song to query
+     * @return An array of SplitterDB.Metadata structs representing the split configuration
+     */
+    function getSplitsInfo(
+        bool isAlbum,
+        uint256 id
+    ) external view returns (SplitterDB.Metadata[] memory) {
+        return splitterDB.getSplits(isAlbum, id);
+    }
+
+    /**
      * @notice Gets the current stablecoin address used for payments
      * @return Address of the stablecoin ERC20 token
      */
@@ -873,6 +886,14 @@ contract Orchestrator is Ownable {
      */
     function getUserDBAddress() external view returns (address) {
         return dbAddress.user;
+    }
+
+    /**
+     * @notice Gets the address of the SplitterDB contract
+     * @return Address of the SplitterDB contract
+     */
+    function getSplitterDBAddress() external view returns (address) {
+        return dbAddress.splitter;
     }
 
     /**
