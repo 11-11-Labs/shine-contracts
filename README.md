@@ -3,7 +3,7 @@
 ![Solidity](https://img.shields.io/badge/Solidity-^0.8.20-blue)
 ![License](https://img.shields.io/badge/License-SHINE--PPL--1.0-red)
 ![Foundry](https://img.shields.io/badge/Framework-Foundry-orange)
-![Version](https://img.shields.io/badge/Version-0.0.1%20"Koromaru"-brightgreen)
+![Version](https://img.shields.io/badge/Version-0.0.1%20"99%20Steps"-brightgreen)
 
 > The blockchain backbone powering **Shine** a decentralized music marketplace that empowers artists and listeners through direct connections, fair compensation, and transparency. These smart contracts serve as an immutable source of truth for the entire ecosystem, ensuring permanent records, true ownership, and data resilience. Even if the Shine platform disappears, users can always recover their music purchases, artist histories, royalties, and transaction records from the blockchain.
 
@@ -27,9 +27,9 @@ The Shine contracts follow a **Database + Orchestrator** pattern:
 │  (Business Logic & User Interface)      │
 └─────────────────────────────────────────┘
            │         │         │         │
-           │         │         │         └─→ ISongDB
-           │         │         └─→ IAlbumDB
-           │         └─→ IArtistDB
+           │         │         │         └─→ ISplitterDB
+           │         │         └─→ ISongDB
+           │         └─→ IAlbumDB
            └─→ IUserDB
 
     Each Database:
@@ -40,6 +40,25 @@ The Shine contracts follow a **Database + Orchestrator** pattern:
 ```
 
 ### Database Contracts
+
+#### **UserDB** - User & Artist Registry
+- Stores user and artist profiles and metadata
+- Tracks user balances and accumulated royalties (for artists)
+- Manages user wallet addresses
+- Tracks user purchase history
+- Supports user/artist banning/unbanning
+- Unified account system for both listeners and creators
+
+```solidity
+key features:
+├── register() - Register new user/artist
+├── changeBasicData() - Update profile
+├── changeAddress() - Transfer account to new address
+├── addBalance() / deductBalance() - Financial tracking
+├── addAccumulatedRoyalties() - Royalty tracking (artists)
+├── addSong() / deleteSong() - Purchase history
+└── ban/unban - Moderation capabilities
+```
 
 #### **AlbumDB** - Album Management
 - Stores album metadata (title, artist, songs, pricing)
@@ -54,23 +73,7 @@ key features:
 ├── purchase() - Record user purchase
 ├── gift() - Record gifted album
 ├── refund() - Handle refunds
-└── ban/unban - Moderation capabilities
-```
-
-#### **ArtistDB** - Artist Registry
-- Stores artist profiles and metadata
-- Tracks artist balances and accumulated royalties
-- Manages artist wallet addresses
-- Supports artist banning/unbanning
-- Independent from user accounts
-
-```solidity
-key features:
-├── register() - Register new artist
-├── changeBasicData() - Update profile
-├── addBalance() / deductBalance() - Financial tracking
-├── addAccumulatedRoyalties() - Royalty accumulation
-└── ban/unban - Moderation capabilities
+└── ban/unban - Moderation
 ```
 
 #### **SongDB** - Song Records
@@ -89,20 +92,18 @@ key features:
 └── ban/unban - Moderation
 ```
 
-#### **UserDB** - User Profiles
-- Manages user registration and metadata
-- Tracks purchase history (array of songs)
-- Manages user balances
-- Handles user address changes
-- Supports user banning
+#### **SplitterDB** - Revenue Splitting
+- Manages revenue split configurations
+- Distributes earnings among multiple artists/users
+- Uses basis points for precise percentage calculations (10000 bp = 100%)
+- Ensures split configurations always sum to 100%
+- Supports both song-level and user-level splits
 
 ```solidity
 key features:
-├── register() - Register new user
-├── changeBasicData() - Update profile
-├── addSong() / deleteSong() - Purchase tracking
-├── addBalance() / deductBalance() - Balance management
-└── ban/unban - Moderation
+├── set() - Configure split for song/user
+├── getSplits() - Retrieve split configuration
+└── calculateSplit() - Calculate distribution amounts
 ```
 
 ### Orchestrator Contract
@@ -118,26 +119,30 @@ key features:
 key features:
 ├── Registration & Profile Management
 │   ├── register() - Register users/artists
-│   ├── changeBasicData() - Update profiles
+│   ├── chnageBasicData() - Update profiles
 │   └── changeAddress() - Transfer accounts
 │
+├── Fund Management
+│   ├── depositFunds() - Add funds to account
+│   ├── depositFundsToAnotherUser() - Gift funds
+│   ├── makeDonation() - Direct artist donations
+│   └── withdrawFunds() - Withdraw earnings
+│
 ├── Music Transactions
+│   ├── registerSong() - Register new songs
+│   ├── registerAlbum() - Register new albums
 │   ├── purchaseSong() - Buy individual songs
 │   ├── purchaseAlbum() - Buy full albums
 │   ├── giftSong() - Gift music to users
 │   ├── giftAlbum() - Gift albums
 │   └── refundSong() / refundAlbum() - Process refunds
 │
-├── Artist Features
-│   ├── Royalty tracking
-│   ├── Balance management
-│   └── Withdrawal capability
-│
 └── Admin Functions
     ├── Fee collection
     ├── Stablecoin management (with timelock)
-    ├── Ban/unban users, artists, songs
-    └── Orchestrator migration
+    ├── Ban/unban users, songs, albums
+    ├── Circuit breaker controls
+    └── Database address configuration
 ```
 
 ## Data Flow Example: Song Purchase
@@ -159,12 +164,13 @@ Orchestrator calls SongDB.purchase()
          ↓
 Orchestrator calls UserDB.addSong()
   → UserDB adds to purchase history
-  → UserDB emits SongListChanged event
+  → UserDB emits SongListChangedSingle event
          ↓
 Orchestrator handles payment:
   • Calculate: net price + platform fee
-  • Transfer stablecoin from user
-  • Distribute to artist balance
+  • Deduct from user balance
+  • Check SplitterDB for revenue splits
+  • Distribute to artist(s) via UserDB.addBalance()
   • Collect platform fee
          ↓
 Transaction complete
@@ -286,23 +292,18 @@ Shine_contracts/
 │   ├── contracts/
 │   │   ├── database/
 │   │   │   ├── AlbumDB.sol      # Album management
-│   │   │   ├── ArtistDB.sol     # Artist registry
 │   │   │   ├── SongDB.sol       # Song records
-│   │   │   └── UserDB.sol       # User profiles
+│   │   │   ├── SplitterDB.sol   # Revenue splitting
+│   │   │   └── UserDB.sol       # User & artist profiles
 │   │   └── orchestrator/
 │   │       ├── Orchestrator.sol # Central logic hub
 │   │       └── library/
 │   │           ├── ErrorsLib.sol
 │   │           ├── EventsLib.sol
 │   │           └── StructsLib.sol
-│   ├── interface/
-│   │   ├── IAlbumDB.sol
-│   │   ├── IArtistDB.sol
-│   │   ├── ISongDB.sol
-│   │   ├── IUserDB.sol
-│   │   └── IERC20.sol
 │   └── library/
-│       └── IdUtils.sol          # Sequential ID generation
+│       ├── IdUtils.sol          # Sequential ID generation
+│       └── IERC20.sol           # ERC20 interface
 │
 ├── test/
 │   ├── uint/                    # Unit tests
@@ -326,7 +327,7 @@ Shine_contracts/
 
 ### Orchestrator Initialization
 1. Deploy Orchestrator with initial owner, stablecoin, and fee %
-2. Deploy AlbumDB, ArtistDB, SongDB, UserDB with Orchestrator address
+2. Deploy AlbumDB, SongDB, UserDB, SplitterDB with Orchestrator address
 3. Set database addresses in Orchestrator
 4. Enable breaker flags for operational readiness
 
@@ -345,9 +346,10 @@ Shine_contracts/
 - Recover purchase records from blockchain even if platform down
 
 ### For Artists
-- Register and manage profiles
+- Register as users with artist capabilities
 - Track accumulated royalties
-- Monitor sales and earnings
+- Configure revenue splits for collaborations
+- Withdraw earnings to blockchain address
 - Maintain permanent record of published works
 
 ### For Platform

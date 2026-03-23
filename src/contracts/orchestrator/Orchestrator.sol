@@ -899,7 +899,7 @@ contract Orchestrator is Ownable {
      * @return Version string
      */
     function version() external pure returns (string memory) {
-        return '0.0.1 "Koromaru"';
+        return '0.0.1';
     }
 
     //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 Internal Functions 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋
