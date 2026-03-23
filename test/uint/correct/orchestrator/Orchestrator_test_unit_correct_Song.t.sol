@@ -88,6 +88,71 @@ contract Orchestrator_test_unit_correct_Song is Constants {
         assertFalse(song.IsBanned, "Song should not be banned");
     }
 
+    function test_unit_correct_setSplitOfSong() public {
+        uint256[] memory artistIDs = new uint256[](2);
+        artistIDs[0] = ARTIST_2_ID;
+        artistIDs[1] = ARTIST_3_ID;
+
+        uint256 songID = _execute_orchestrator_registerSong(
+            ARTIST_1.Address,
+            "Split Song",
+            ARTIST_1_ID,
+            artistIDs,
+            "https://arweave.net/mediaURI",
+            "https://arweave.net/metadataURI",
+            true,
+            1000
+        );
+
+
+        SplitterDB.Metadata[] memory splitMetadata = new SplitterDB.Metadata[](3);
+        splitMetadata[0] = SplitterDB.Metadata({
+            id: ARTIST_1_ID,
+            splitBasisPoints: 5000
+        });
+        splitMetadata[1] = SplitterDB.Metadata({
+            id: ARTIST_2_ID,
+            splitBasisPoints: 3000
+        });
+        splitMetadata[2] = SplitterDB.Metadata({
+            id: ARTIST_3_ID,
+            splitBasisPoints: 2000
+        });
+
+        vm.startPrank(ARTIST_1.Address);
+        orchestrator.setSplitOfSong(songID, splitMetadata);
+        vm.stopPrank();
+
+        SplitterDB.Metadata[] memory retrievedSplit = splitterDB.getSplits(
+            true,
+            songID
+        );
+
+        assertEq(
+            retrievedSplit.length,
+            splitMetadata.length,
+            "Retrieved split length should match"
+        );
+
+        for (uint256 i; i < splitMetadata.length; ) {
+            assertEq(
+                retrievedSplit[i].id,
+                splitMetadata[i].id,
+                "Split recipient ID should match"
+            );
+            assertEq(
+                retrievedSplit[i].splitBasisPoints,
+                splitMetadata[i].splitBasisPoints,
+                "Split basis points should match"
+            );
+            unchecked {
+                ++i;
+            }
+        }
+
+
+    }
+
     function test_unit_correct_changeSongFullData() public {
         uint256[] memory initialArtistIDs = new uint256[](1);
         initialArtistIDs[0] = ARTIST_2_ID;
