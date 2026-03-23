@@ -372,6 +372,15 @@ contract Orchestrator is Ownable {
         senderIsUserId(songDB.getPrincipalArtistId(songId))
         songIdExists(songId)
     {
+        for (uint256 i = 0; i < splitMetadata.length; ) {
+            if (!userDB.exists(splitMetadata[i].id))
+                revert ErrorsLib.UserIdDoesNotExist(splitMetadata[i].id);
+
+            unchecked {
+                i++;
+            }
+        }
+
         splitterDB.set(false, songId, splitMetadata);
     }
 
@@ -558,6 +567,15 @@ contract Orchestrator is Ownable {
         senderIsUserId(albumDB.getPrincipalArtistId(albumId))
         albumIdExists(albumId)
     {
+        for (uint256 i = 0; i < splitMetadata.length; ) {
+            if (!userDB.exists(splitMetadata[i].id))
+                revert ErrorsLib.UserIdDoesNotExist(splitMetadata[i].id);
+
+            unchecked {
+                i++;
+            }
+        }
+        
         splitterDB.set(true, albumId, splitMetadata);
     }
 
@@ -971,7 +989,7 @@ contract Orchestrator is Ownable {
             if (calculations.length > 1) {
                 for (uint256 i = 0; i < calculations.length; ) {
                     SplitterDB.ReturnCalculation memory calc = calculations[i];
-                    
+
                     if (calc.amountToReceive > 0)
                         userDB.addBalance(calc.id, calc.amountToReceive);
 
