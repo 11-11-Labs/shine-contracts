@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 import "testing/Constants.sol";
 
 import {SongDB} from "@shine/contracts/database/SongDB.sol";
+import {SplitterDB} from "@shine/contracts/database/SplitterDB.sol";
 import {ErrorsLib} from "@shine/contracts/orchestrator/library/ErrorsLib.sol";
 import {ERC20} from "@solady/tokens/ERC20.sol";
 
@@ -236,17 +237,127 @@ contract Orchestrator_test_unit_revert_Song is Constants {
         vm.stopPrank();
     }
 
-    /*
+    function test_unit_revert_registerSong_AddressIsNotOwnerOfUserId() public {
+        vm.startPrank(ARTIST_2.Address);
 
-    function test_unit_revert_purchaseSong_noExtra() public {
-        uint256[] memory artistIDs = new uint256[](1);
-        artistIDs[0] = ARTIST_2_ID;
+        uint256[] memory artistIDs = new uint256[](0);
 
+        vm.expectRevert(ErrorsLib.AddressIsNotOwnerOfUserId.selector);
+        orchestrator.registerSong(
+            "Song Title",
+            ARTIST_1_ID,
+            artistIDs,
+            "https://arweave.net/mediaURI",
+            "https://arweave.net/metadataURI",
+            true,
+            1000
+        );
+
+        vm.stopPrank();
+    }
+
+    function test_unit_revert_setSplitOfSong_AddressIsNotOwnerOfUserId() public {
+        uint256[] memory artistIDs = new uint256[](0);
+
+        uint256 songID = _execute_orchestrator_registerSong(
+            ARTIST_1.Address,
+            "Split Song",
+            ARTIST_1_ID,
+            artistIDs,
+            "https://arweave.net/mediaURI",
+            "https://arweave.net/metadataURI",
+            true,
+            1000
+        );
+
+        SplitterDB.Metadata[] memory splitMetadata = new SplitterDB.Metadata[](1);
+        splitMetadata[0] = SplitterDB.Metadata({id: ARTIST_1_ID, splitBasisPoints: 10000});
+
+        vm.startPrank(ARTIST_2.Address);
+        vm.expectRevert(ErrorsLib.AddressIsNotOwnerOfUserId.selector);
+        orchestrator.setSplitOfSong(songID, splitMetadata);
+        vm.stopPrank();
+    }
+
+    function test_unit_revert_setSplitOfSong_UserIdDoesNotExist() public {
+        uint256[] memory artistIDs = new uint256[](0);
+
+        uint256 songID = _execute_orchestrator_registerSong(
+            ARTIST_1.Address,
+            "Split Song",
+            ARTIST_1_ID,
+            artistIDs,
+            "https://arweave.net/mediaURI",
+            "https://arweave.net/metadataURI",
+            true,
+            1000
+        );
+
+        SplitterDB.Metadata[] memory splitMetadata = new SplitterDB.Metadata[](2);
+        splitMetadata[0] = SplitterDB.Metadata({id: ARTIST_1_ID, splitBasisPoints: 5000});
+        splitMetadata[1] = SplitterDB.Metadata({id: 99999999, splitBasisPoints: 5000});
+
+        vm.startPrank(ARTIST_1.Address);
+        vm.expectRevert(
+            abi.encodeWithSelector(ErrorsLib.UserIdDoesNotExist.selector, 99999999)
+        );
+        orchestrator.setSplitOfSong(songID, splitMetadata);
+        vm.stopPrank();
+    }
+
+    function test_unit_revert_setSplitOfSong_DataIsEmpty() public {
+        uint256[] memory artistIDs = new uint256[](0);
+
+        uint256 songID = _execute_orchestrator_registerSong(
+            ARTIST_1.Address,
+            "Split Song",
+            ARTIST_1_ID,
+            artistIDs,
+            "https://arweave.net/mediaURI",
+            "https://arweave.net/metadataURI",
+            true,
+            1000
+        );
+
+        SplitterDB.Metadata[] memory splitMetadata = new SplitterDB.Metadata[](0);
+
+        vm.startPrank(ARTIST_1.Address);
+        vm.expectRevert(SplitterDB.DataIsEmpty.selector);
+        orchestrator.setSplitOfSong(songID, splitMetadata);
+        vm.stopPrank();
+    }
+
+    function test_unit_revert_setSplitOfSong_MustSumToMaxBasisPoints() public {
+        uint256[] memory artistIDs = new uint256[](0);
+
+        uint256 songID = _execute_orchestrator_registerSong(
+            ARTIST_1.Address,
+            "Split Song",
+            ARTIST_1_ID,
+            artistIDs,
+            "https://arweave.net/mediaURI",
+            "https://arweave.net/metadataURI",
+            true,
+            1000
+        );
+
+        SplitterDB.Metadata[] memory splitMetadata = new SplitterDB.Metadata[](2);
+        splitMetadata[0] = SplitterDB.Metadata({id: ARTIST_1_ID, splitBasisPoints: 3000});
+        splitMetadata[1] = SplitterDB.Metadata({id: ARTIST_2_ID, splitBasisPoints: 3000});
+
+        vm.startPrank(ARTIST_1.Address);
+        vm.expectRevert(SplitterDB.MustSumToMaxBasisPoints.selector);
+        orchestrator.setSplitOfSong(songID, splitMetadata);
+        vm.stopPrank();
+    }
+
+    function test_unit_revert_purchaseSong_SongNotAssignedToAlbum() public {
+        uint256[] memory artistIDs = new uint256[](0);
         uint256 netPrice = 1000;
 
         uint256 songID = _execute_orchestrator_registerSong(
             ARTIST_1.Address,
-            "Purchasable Song",
+            "Unassigned Song",
             ARTIST_1_ID,
             artistIDs,
             "https://arweave.net/mediaURI",
@@ -255,61 +366,43 @@ contract Orchestrator_test_unit_revert_Song is Constants {
             netPrice
         );
 
-        (uint256 totalPrice, uint256 calculatedFee) = orchestrator
-            .getPriceWithFee(netPrice);
-
+        (uint256 totalPrice, ) = orchestrator.getPriceWithFee(netPrice);
         _execute_orchestrator_depositFunds(USER.Address, totalPrice);
 
         vm.startPrank(USER.Address);
+        vm.expectRevert(SongDB.SongNotAssignedToAlbum.selector);
         orchestrator.purchaseSong(songID, 0);
         vm.stopPrank();
-
-        uint256[] memory purchasedSongs = userDB.getPurchasedSong(USER_ID);
-
-        uint256[] memory expectedSongs = new uint256[](1);
-        expectedSongs[0] = songID;
-
-        assertEq(
-            purchasedSongs,
-            expectedSongs,
-            "User should have one purchased song"
-        );
-
-        assertEq(
-            songDB.getMetadata(songID).TimesBought,
-            1,
-            "Song's times bought should be incremented"
-        );
-
-        assertEq(
-            userDB.getMetadata(USER_ID).Balance,
-            0,
-            "User's balance should be zero after purchase"
-        );
-
-        assertEq(
-            userDB.getMetadata(ARTIST_1_ID).Balance,
-            netPrice,
-            "Principal artist's balance should be updated"
-        );
-
-        vm.startPrank(ADMIN.Address);
-        uint256 feesCollected = orchestrator.getAmountCollectedInFees();
-        vm.stopPrank();
-
-        assertEq(
-            feesCollected,
-            calculatedFee,
-            "Platform fees collected should match the calculated fee"
-        );
     }
 
-    function test_unit_revert_purchaseSong_extra() public {
-        uint256[] memory artistIDs = new uint256[](1);
-        artistIDs[0] = ARTIST_2_ID;
-
+    function test_unit_revert_purchaseSong_SongCannotBePurchased() public {
+        uint256[] memory artistIDs = new uint256[](0);
         uint256 netPrice = 1000;
-        uint256 extraAmount = 500;
+
+        uint256 songID = _execute_orchestrator_registerSong(
+            ARTIST_1.Address,
+            "Non-purchasable Song",
+            ARTIST_1_ID,
+            artistIDs,
+            "https://arweave.net/mediaURI",
+            "https://arweave.net/metadataURI",
+            false,
+            netPrice
+        );
+        _assign_song_to_album_direct(songID, 1);
+
+        (uint256 totalPrice, ) = orchestrator.getPriceWithFee(netPrice);
+        _execute_orchestrator_depositFunds(USER.Address, totalPrice);
+
+        vm.startPrank(USER.Address);
+        vm.expectRevert(SongDB.SongCannotBePurchased.selector);
+        orchestrator.purchaseSong(songID, 0);
+        vm.stopPrank();
+    }
+
+    function test_unit_revert_purchaseSong_UserAlreadyOwns() public {
+        uint256[] memory artistIDs = new uint256[](0);
+        uint256 netPrice = 1000;
 
         uint256 songID = _execute_orchestrator_registerSong(
             ARTIST_1.Address,
@@ -321,64 +414,42 @@ contract Orchestrator_test_unit_revert_Song is Constants {
             true,
             netPrice
         );
+        _assign_song_to_album_direct(songID, 1);
 
-        (uint256 totalPrice, uint256 calculatedFee) = orchestrator
-            .getPriceWithFee(netPrice);
-
-        _execute_orchestrator_depositFunds(
-            USER.Address,
-            totalPrice + extraAmount
-        );
+        (uint256 totalPrice, ) = orchestrator.getPriceWithFee(netPrice);
+        _execute_orchestrator_depositFunds(USER.Address, totalPrice * 2);
 
         vm.startPrank(USER.Address);
-        orchestrator.purchaseSong(songID, extraAmount);
+        orchestrator.purchaseSong(songID, 0);
+        vm.expectRevert(SongDB.UserAlreadyOwns.selector);
+        orchestrator.purchaseSong(songID, 0);
         vm.stopPrank();
-
-        uint256[] memory purchasedSongs = userDB.getPurchasedSong(USER_ID);
-
-        uint256[] memory expectedSongs = new uint256[](1);
-        expectedSongs[0] = songID;
-
-        assertEq(
-            purchasedSongs,
-            expectedSongs,
-            "User should have one purchased song"
-        );
-
-        assertEq(
-            songDB.getMetadata(songID).TimesBought,
-            1,
-            "Song's times bought should be incremented"
-        );
-
-        assertEq(
-            userDB.getMetadata(USER_ID).Balance,
-            0,
-            "User's balance should be zero after purchase"
-        );
-
-        assertEq(
-            userDB.getMetadata(ARTIST_1_ID).Balance,
-            netPrice + extraAmount,
-            "Principal artist's balance should be updated"
-        );
-
-        vm.startPrank(ADMIN.Address);
-        uint256 feesCollected = orchestrator.getAmountCollectedInFees();
-        vm.stopPrank();
-
-        assertEq(
-            feesCollected,
-            calculatedFee,
-            "Platform fees collected should match the calculated fee"
-        );
     }
 
-    function test_unit_revert_giftSong() public {
-        uint256[] memory artistIDs = new uint256[](1);
-        artistIDs[0] = ARTIST_2_ID;
-
+    function test_unit_revert_purchaseSong_InsufficientBalance() public {
+        uint256[] memory artistIDs = new uint256[](0);
         uint256 netPrice = 1000;
+
+        uint256 songID = _execute_orchestrator_registerSong(
+            ARTIST_1.Address,
+            "Purchasable Song",
+            ARTIST_1_ID,
+            artistIDs,
+            "https://arweave.net/mediaURI",
+            "https://arweave.net/metadataURI",
+            true,
+            netPrice
+        );
+        _assign_song_to_album_direct(songID, 1);
+
+        vm.startPrank(USER.Address);
+        vm.expectRevert(ErrorsLib.InsufficientBalance.selector);
+        orchestrator.purchaseSong(songID, 0);
+        vm.stopPrank();
+    }
+
+    function test_unit_revert_giftSong_AddressIsNotOwnerOfUserId() public {
+        uint256[] memory artistIDs = new uint256[](0);
 
         uint256 songID = _execute_orchestrator_registerSong(
             ARTIST_1.Address,
@@ -388,41 +459,54 @@ contract Orchestrator_test_unit_revert_Song is Constants {
             "https://arweave.net/mediaURI",
             "https://arweave.net/metadataURI",
             true,
-            netPrice
+            1000
+        );
+
+        vm.startPrank(ARTIST_2.Address);
+        vm.expectRevert(ErrorsLib.AddressIsNotOwnerOfUserId.selector);
+        orchestrator.giftSong(songID, USER_ID);
+        vm.stopPrank();
+    }
+
+    function test_unit_revert_giftSong_SongNotAssignedToAlbum() public {
+        uint256[] memory artistIDs = new uint256[](0);
+
+        uint256 songID = _execute_orchestrator_registerSong(
+            ARTIST_1.Address,
+            "Giftable Song",
+            ARTIST_1_ID,
+            artistIDs,
+            "https://arweave.net/mediaURI",
+            "https://arweave.net/metadataURI",
+            true,
+            1000
         );
 
         vm.startPrank(ARTIST_1.Address);
+        vm.expectRevert(SongDB.SongNotAssignedToAlbum.selector);
         orchestrator.giftSong(songID, USER_ID);
         vm.stopPrank();
-
-        uint256[] memory giftedSongs = userDB.getPurchasedSong(USER_ID);
-
-        uint256[] memory expectedSongs = new uint256[](1);
-        expectedSongs[0] = songID;
-
-        assertEq(
-            giftedSongs,
-            expectedSongs,
-            "Recipient should have the gifted song"
-        );
-
-        assertEq(
-            songDB.getMetadata(songID).TimesBought,
-            1,
-            "Song's times bought should be incremented"
-        );
-
-        assertEq(
-            userDB.getMetadata(USER_ID).Balance,
-            0,
-            "Gifter's balance should be unchanged after gifting"
-        );
-
-        assertEq(
-            userDB.getMetadata(ARTIST_1_ID).Balance,
-            0,
-            "Principal artist's balance should be unchanged after gifting"
-        );
     }
-    */
+
+    function test_unit_revert_giftSong_UserAlreadyOwns() public {
+        uint256[] memory artistIDs = new uint256[](0);
+
+        uint256 songID = _execute_orchestrator_registerSong(
+            ARTIST_1.Address,
+            "Giftable Song",
+            ARTIST_1_ID,
+            artistIDs,
+            "https://arweave.net/mediaURI",
+            "https://arweave.net/metadataURI",
+            true,
+            1000
+        );
+        _assign_song_to_album_direct(songID, 1);
+
+        vm.startPrank(ARTIST_1.Address);
+        orchestrator.giftSong(songID, USER_ID);
+        vm.expectRevert(SongDB.UserAlreadyOwns.selector);
+        orchestrator.giftSong(songID, USER_ID);
+        vm.stopPrank();
+    }
 }
