@@ -44,7 +44,7 @@ contract Orchestrator_test_unit_correct_Song is Constants {
 
         uint256 songID = orchestrator.registerSong(
             "Song Title",
-            USER_ID,
+            ARTIST_1_ID,
             artistIDs,
             "https://arweave.net/mediaURI",
             "https://arweave.net/metadataURI",
@@ -124,7 +124,7 @@ contract Orchestrator_test_unit_correct_Song is Constants {
         vm.stopPrank();
 
         SplitterDB.Metadata[] memory retrievedSplit = splitterDB.getSplits(
-            true,
+            false,
             songID
         );
 
@@ -167,6 +167,7 @@ contract Orchestrator_test_unit_correct_Song is Constants {
             true,
             500
         );
+        _assign_song_to_album_direct(songID, 1);
 
         vm.startPrank(ARTIST_1.Address);
         uint256[] memory newArtistIDs = new uint256[](2);
@@ -225,6 +226,7 @@ contract Orchestrator_test_unit_correct_Song is Constants {
             true,
             500
         );
+        _assign_song_to_album_direct(songID, 1);
 
         vm.startPrank(ARTIST_1.Address);
         orchestrator.changeSongPrice(songID, 2000);
@@ -248,6 +250,7 @@ contract Orchestrator_test_unit_correct_Song is Constants {
             true,
             500
         );
+        _assign_song_to_album_direct(songID, 1);
 
         vm.startPrank(ARTIST_1.Address);
         orchestrator.changeSongPurchaseability(songID, false);
@@ -273,6 +276,7 @@ contract Orchestrator_test_unit_correct_Song is Constants {
             true,
             netPrice
         );
+        _assign_song_to_album_direct(songID, 1);
 
         (uint256 totalPrice, uint256 calculatedFee) = orchestrator
             .getPriceWithFee(netPrice);
@@ -340,6 +344,7 @@ contract Orchestrator_test_unit_correct_Song is Constants {
             true,
             netPrice
         );
+        _assign_song_to_album_direct(songID, 1);
 
         (uint256 totalPrice, uint256 calculatedFee) = orchestrator
             .getPriceWithFee(netPrice);
@@ -409,6 +414,7 @@ contract Orchestrator_test_unit_correct_Song is Constants {
             true,
             netPrice
         );
+        _assign_song_to_album_direct(songID, 1);
 
         vm.startPrank(ARTIST_1.Address);
         orchestrator.giftSong(songID, USER_ID);

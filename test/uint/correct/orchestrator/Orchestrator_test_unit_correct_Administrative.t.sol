@@ -37,6 +37,7 @@ contract Orchestrator_test_unit_correct_Administrative is Constants {
             true,
             netPrice
         );
+        _assign_song_to_album_direct(songID, 1);
 
         (uint256 totalPrice, ) = orchestrator.getPriceWithFee(netPrice);
 

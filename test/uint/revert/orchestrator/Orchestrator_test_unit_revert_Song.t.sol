@@ -54,7 +54,7 @@ contract Orchestrator_test_unit_revert_Song is Constants {
 
         orchestrator.registerSong(
             "Song Title",
-            USER_ID,
+            ARTIST_1_ID,
             artistIDs,
             "https://arweave.net/mediaURI",
             "https://arweave.net/metadataURI",
@@ -75,7 +75,7 @@ contract Orchestrator_test_unit_revert_Song is Constants {
         vm.expectRevert(ErrorsLib.TitleCannotBeEmpty.selector);
         orchestrator.registerSong(
             "",
-            USER_ID,
+            ARTIST_1_ID,
             artistIDs,
             "https://arweave.net/mediaURI",
             "https://arweave.net/metadataURI",
