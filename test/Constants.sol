@@ -179,6 +179,11 @@ abstract contract Constants is Test {
         vm.stopPrank();
         return songId;
     }
+
+    function _assign_song_to_album_direct(uint256 songId, uint256 albumId) internal virtual {
+        vm.prank(address(orchestrator));
+        songDB.assignToAlbum(songId, albumId);
+    }
 }
 
 contract MockUsdc is ERC20 {
