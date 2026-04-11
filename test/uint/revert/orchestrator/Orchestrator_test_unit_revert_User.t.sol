@@ -7,7 +7,7 @@ import "testing/Constants.sol";
 import {UserDB} from "@shine/contracts/database/UserDB.sol";
 import {ErrorsLib} from "@shine/contracts/orchestrator/library/ErrorsLib.sol";
 
-contract Orchestrator_test_unit_revert_UserArtist is Constants {
+contract Orchestrator_test_unit_revert_User is Constants {
     function test_unit_revert_chnageBasicData_AddressIsNotOwnerOfUserId()
         public
     {
