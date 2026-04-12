@@ -1,7 +1,7 @@
 include .env
 export
 
-BASE_SEPOLIA_ARGS := --rpc-url $(RPC_URL_BASE_SEPOLIA) \
+ARB_SEPOLIA_ARGS := --rpc-url $(RPC_URL_ARB_SEPOLIA) \
 					 --account defaultKey \
 					 --broadcast \
 					 --verify \
@@ -10,7 +10,7 @@ BASE_SEPOLIA_ARGS := --rpc-url $(RPC_URL_BASE_SEPOLIA) \
 deployTestnet:
 	@forge clean
 	@echo "Deploying SongDB to Base testnet"
-	@forge script script/SongDB.s.sol:SongDBScript $(BASE_SEPOLIA_ARGS)
+	@forge script script/Deploy.s.sol:DeployScript $(ARB_SEPOLIA_ARGS)
 
 unitTest:
 	@echo "Running SongDB unit tests"
