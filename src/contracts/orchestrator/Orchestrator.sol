@@ -320,6 +320,60 @@ contract Orchestrator is Ownable {
     }
 
     /**
+     * @notice Registers multiple songs in a single transaction
+     * @dev Validates all featured artists exist and titles are not empty. Only the principal artist can register.
+     *      Returns an array of newly assigned song IDs corresponding to the input arrays.
+     * @param title Array of song titles
+     * @param principalArtistId The main artist ID (must be the sender)
+     * @param artistIDs Array of arrays of featured artist IDs for each song
+     * @param mediaURI Array of URIs pointing to each song's audio/media
+     * @param metadataURI Array of URIs pointing to each song's metadata
+     * @param canBePurchased Array of booleans indicating purchasability for each song
+     * @param netprice Array of net artist prices for each song (before platform fees)
+     * @return An array of newly assigned song IDs for the registered songs
+     */
+    function registerSongOnBatch(
+        string[] calldata title,
+        uint256 principalArtistId,
+        uint256[][] calldata artistIDs,
+        string[] calldata mediaURI,
+        string[] calldata metadataURI,
+        bool[] calldata canBePurchased,
+        uint256[] calldata netprice
+    )
+        external
+        checkContentRegistrationBreaker
+        senderIsUserId(principalArtistId)
+        returns (uint256[] memory)
+    {
+        uint256 length = title.length;
+
+        uint256[] memory songIds = new uint256[](length);
+
+        for (uint256 i = 0; i < length; i++) {
+            for (uint256 j = 0; j < artistIDs[i].length; j++) {
+                if (!userDB.exists(artistIDs[i][j]))
+                    revert ErrorsLib.UserIdDoesNotExist(artistIDs[i][j]);
+            }
+
+            if (bytes(title[i]).length == 0)
+                revert ErrorsLib.TitleCannotBeEmpty();
+
+            songIds[i] = songDB.register(
+                title[i],
+                principalArtistId,
+                artistIDs[i],
+                mediaURI[i],
+                metadataURI[i],
+                canBePurchased[i],
+                netprice[i]
+            );
+        }
+
+        return songIds;
+    }
+
+    /**
      * @notice Updates all metadata for an existing song
      * @dev Only the principal artist can update. Cannot modify principal artist.
      * @param id The song ID to update
@@ -364,6 +418,12 @@ contract Orchestrator is Ownable {
         );
     }
 
+    /**
+     * @notice Sets the revenue split metadata for a song
+     * @dev Only the principal artist can set splits. Validates all user IDs in splits exist.
+     * @param songId The song ID to set splits for
+     * @param splitMetadata Array of SplitterDB.Metadata structs defining the revenue splits
+     */
     function setSplitOfSong(
         uint256 songId,
         SplitterDB.Metadata[] calldata splitMetadata
@@ -382,6 +442,40 @@ contract Orchestrator is Ownable {
         }
 
         splitterDB.set(false, songId, splitMetadata);
+    }
+
+    /**
+     * @notice Sets the revenue split metadata for multiple songs in batch
+     * @dev Only the principal artist can set splits. Validates all user IDs in splits exist.
+     * @param songIds Array of song IDs to set splits for
+     * @param splitMetadata Array of arrays of SplitterDB.Metadata structs for each song
+     */
+    function setSplitOfSongs(
+        uint256[] calldata songIds,
+        SplitterDB.Metadata[][] calldata splitMetadata
+    ) external {
+        uint256 length = songIds.length;
+
+        for (uint256 i = 0; i < length; i++) {
+            if (!songDB.exists(songIds[i]))
+                revert ErrorsLib.SongIdDoesNotExist(songIds[i]);
+
+            if (
+                songDB.getPrincipalArtistId(songIds[i]) !=
+                userDB.getId(msg.sender)
+            ) revert ErrorsLib.AddressIsNotOwnerOfUserId();
+
+            for (uint256 j = 0; j < splitMetadata[i].length; ) {
+                if (!userDB.exists(splitMetadata[i][j].id))
+                    revert ErrorsLib.UserIdDoesNotExist(splitMetadata[i][j].id);
+
+                unchecked {
+                    j++;
+                }
+            }
+
+            splitterDB.set(false, songIds[i], splitMetadata[i]);
+        }
     }
 
     /**
@@ -575,7 +669,7 @@ contract Orchestrator is Ownable {
                 i++;
             }
         }
-        
+
         splitterDB.set(true, albumId, splitMetadata);
     }
 

@@ -509,4 +509,220 @@ contract Orchestrator_test_unit_revert_Song is Constants {
         orchestrator.giftSong(songID, USER_ID);
         vm.stopPrank();
     }
+
+    function test_unit_revert_registerSongOnBatch__AddressIsNotOwnerOfUserId()
+        public
+    {
+        string[] memory titles = new string[](1);
+        titles[0] = "A Song";
+
+        uint256[][] memory artistIDs = new uint256[][](1);
+        artistIDs[0] = new uint256[](0);
+
+        string[] memory mediaURIs = new string[](1);
+        mediaURIs[0] = "https://arweave.net/mediaURI";
+
+        string[] memory metadataURIs = new string[](1);
+        metadataURIs[0] = "https://arweave.net/metadataURI";
+
+        bool[] memory canBePurchased = new bool[](1);
+        canBePurchased[0] = true;
+
+        uint256[] memory netprices = new uint256[](1);
+        netprices[0] = 1000;
+
+        vm.startPrank(ARTIST_2.Address);
+        vm.expectRevert(ErrorsLib.AddressIsNotOwnerOfUserId.selector);
+        orchestrator.registerSongOnBatch(
+            titles,
+            ARTIST_1_ID,
+            artistIDs,
+            mediaURIs,
+            metadataURIs,
+            canBePurchased,
+            netprices
+        );
+        vm.stopPrank();
+    }
+
+    function test_unit_revert_registerSongOnBatch__TitleCannotBeEmpty() public {
+        string[] memory titles = new string[](2);
+        titles[0] = "Valid Title";
+        titles[1] = "";
+
+        uint256[][] memory artistIDs = new uint256[][](2);
+        artistIDs[0] = new uint256[](0);
+        artistIDs[1] = new uint256[](0);
+
+        string[] memory mediaURIs = new string[](2);
+        mediaURIs[0] = "https://arweave.net/media1URI";
+        mediaURIs[1] = "https://arweave.net/media2URI";
+
+        string[] memory metadataURIs = new string[](2);
+        metadataURIs[0] = "https://arweave.net/metadata1URI";
+        metadataURIs[1] = "https://arweave.net/metadata2URI";
+
+        bool[] memory canBePurchased = new bool[](2);
+        canBePurchased[0] = true;
+        canBePurchased[1] = true;
+
+        uint256[] memory netprices = new uint256[](2);
+        netprices[0] = 1000;
+        netprices[1] = 1000;
+
+        vm.startPrank(ARTIST_1.Address);
+        vm.expectRevert(ErrorsLib.TitleCannotBeEmpty.selector);
+        orchestrator.registerSongOnBatch(
+            titles,
+            ARTIST_1_ID,
+            artistIDs,
+            mediaURIs,
+            metadataURIs,
+            canBePurchased,
+            netprices
+        );
+        vm.stopPrank();
+    }
+
+    function test_unit_revert_registerSongOnBatch__UserIdDoesNotExist() public {
+        string[] memory titles = new string[](1);
+        titles[0] = "Valid Title";
+
+        uint256[][] memory artistIDs = new uint256[][](1);
+        artistIDs[0] = new uint256[](1);
+        artistIDs[0][0] = 99999999;
+
+        string[] memory mediaURIs = new string[](1);
+        mediaURIs[0] = "https://arweave.net/mediaURI";
+
+        string[] memory metadataURIs = new string[](1);
+        metadataURIs[0] = "https://arweave.net/metadataURI";
+
+        bool[] memory canBePurchased = new bool[](1);
+        canBePurchased[0] = true;
+
+        uint256[] memory netprices = new uint256[](1);
+        netprices[0] = 1000;
+
+        vm.startPrank(ARTIST_1.Address);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ErrorsLib.UserIdDoesNotExist.selector,
+                99999999
+            )
+        );
+        orchestrator.registerSongOnBatch(
+            titles,
+            ARTIST_1_ID,
+            artistIDs,
+            mediaURIs,
+            metadataURIs,
+            canBePurchased,
+            netprices
+        );
+        vm.stopPrank();
+    }
+    
+    function test_unit_revert_setSplitOfSongs__SongIdDoesNotExist() public {
+        uint256[] memory songIds = new uint256[](1);
+        songIds[0] = 99999999;
+
+        SplitterDB.Metadata[][] memory allSplits = new SplitterDB.Metadata[][](1);
+        allSplits[0] = new SplitterDB.Metadata[](1);
+        allSplits[0][0] = SplitterDB.Metadata({id: ARTIST_1_ID, splitBasisPoints: 10000});
+
+        vm.startPrank(ARTIST_1.Address);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ErrorsLib.SongIdDoesNotExist.selector,
+                99999999
+            )
+        );
+        orchestrator.setSplitOfSongs(songIds, allSplits);
+        vm.stopPrank();
+    }
+
+    function test_unit_revert_setSplitOfSongs__AddressIsNotOwnerOfUserId()
+        public
+    {
+        uint256 songID = _execute_orchestrator_registerSong(
+            ARTIST_1.Address,
+            "Batch Split Song",
+            ARTIST_1_ID,
+            new uint256[](0),
+            "https://arweave.net/mediaURI",
+            "https://arweave.net/metadataURI",
+            true,
+            1000
+        );
+
+        uint256[] memory songIds = new uint256[](1);
+        songIds[0] = songID;
+
+        SplitterDB.Metadata[][] memory allSplits = new SplitterDB.Metadata[][](1);
+        allSplits[0] = new SplitterDB.Metadata[](1);
+        allSplits[0][0] = SplitterDB.Metadata({id: ARTIST_1_ID, splitBasisPoints: 10000});
+
+        vm.startPrank(ARTIST_2.Address);
+        vm.expectRevert(ErrorsLib.AddressIsNotOwnerOfUserId.selector);
+        orchestrator.setSplitOfSongs(songIds, allSplits);
+        vm.stopPrank();
+    }
+
+    function test_unit_revert_setSplitOfSongs__UserIdDoesNotExist() public {
+        uint256 songID = _execute_orchestrator_registerSong(
+            ARTIST_1.Address,
+            "Batch Split Song",
+            ARTIST_1_ID,
+            new uint256[](0),
+            "https://arweave.net/mediaURI",
+            "https://arweave.net/metadataURI",
+            true,
+            1000
+        );
+
+        uint256[] memory songIds = new uint256[](1);
+        songIds[0] = songID;
+
+        SplitterDB.Metadata[][] memory allSplits = new SplitterDB.Metadata[][](1);
+        allSplits[0] = new SplitterDB.Metadata[](2);
+        allSplits[0][0] = SplitterDB.Metadata({id: ARTIST_1_ID, splitBasisPoints: 5000});
+        allSplits[0][1] = SplitterDB.Metadata({id: 99999999, splitBasisPoints: 5000});
+
+        vm.startPrank(ARTIST_1.Address);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ErrorsLib.UserIdDoesNotExist.selector,
+                99999999
+            )
+        );
+        orchestrator.setSplitOfSongs(songIds, allSplits);
+        vm.stopPrank();
+    }
+
+    function test_unit_revert_setSplitOfSongs__MustSumToMaxBasisPoints() public {
+        uint256 songID = _execute_orchestrator_registerSong(
+            ARTIST_1.Address,
+            "Batch Split Song",
+            ARTIST_1_ID,
+            new uint256[](0),
+            "https://arweave.net/mediaURI",
+            "https://arweave.net/metadataURI",
+            true,
+            1000
+        );
+
+        uint256[] memory songIds = new uint256[](1);
+        songIds[0] = songID;
+
+        SplitterDB.Metadata[][] memory allSplits = new SplitterDB.Metadata[][](1);
+        allSplits[0] = new SplitterDB.Metadata[](2);
+        allSplits[0][0] = SplitterDB.Metadata({id: ARTIST_1_ID, splitBasisPoints: 3000});
+        allSplits[0][1] = SplitterDB.Metadata({id: ARTIST_2_ID, splitBasisPoints: 3000});
+
+        vm.startPrank(ARTIST_1.Address);
+        vm.expectRevert(SplitterDB.MustSumToMaxBasisPoints.selector);
+        orchestrator.setSplitOfSongs(songIds, allSplits);
+        vm.stopPrank();
+    }
 }

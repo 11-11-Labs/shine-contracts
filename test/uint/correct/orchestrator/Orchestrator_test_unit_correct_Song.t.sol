@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 import "testing/Constants.sol";
 
 import {SongDB} from "@shine/contracts/database/SongDB.sol";
+import {SplitterDB} from "@shine/contracts/database/SplitterDB.sol";
 
 contract Orchestrator_test_unit_correct_Song is Constants {
     AccountData ARTIST_3 = WILDCARD_ACCOUNT;
@@ -448,5 +449,114 @@ contract Orchestrator_test_unit_correct_Song is Constants {
             0,
             "Principal artist's balance should be unchanged after gifting"
         );
+    }
+
+    function test_unit_correct_registerSongOnBatch() public {
+        string[] memory titles = new string[](2);
+        titles[0] = "Batch Song One";
+        titles[1] = "Batch Song Two";
+
+        uint256[][] memory artistIDs = new uint256[][](2);
+        artistIDs[0] = new uint256[](1);
+        artistIDs[0][0] = ARTIST_2_ID;
+        artistIDs[1] = new uint256[](0);
+
+        string[] memory mediaURIs = new string[](2);
+        mediaURIs[0] = "https://arweave.net/batch1MediaURI";
+        mediaURIs[1] = "https://arweave.net/batch2MediaURI";
+
+        string[] memory metadataURIs = new string[](2);
+        metadataURIs[0] = "https://arweave.net/batch1MetadataURI";
+        metadataURIs[1] = "https://arweave.net/batch2MetadataURI";
+
+        bool[] memory canBePurchased = new bool[](2);
+        canBePurchased[0] = true;
+        canBePurchased[1] = false;
+
+        uint256[] memory netprices = new uint256[](2);
+        netprices[0] = 1000;
+        netprices[1] = 2000;
+
+        vm.startPrank(ARTIST_1.Address);
+        uint256[] memory songIds = orchestrator.registerSongOnBatch(
+            titles,
+            ARTIST_1_ID,
+            artistIDs,
+            mediaURIs,
+            metadataURIs,
+            canBePurchased,
+            netprices
+        );
+        vm.stopPrank();
+
+        assertEq(songIds.length, 2, "Should return 2 song IDs");
+
+        SongDB.Metadata memory song0 = songDB.getMetadata(songIds[0]);
+        assertEq(song0.Title, "Batch Song One", "First song title should match");
+        assertEq(song0.PrincipalArtistId, ARTIST_1_ID, "First song principal artist should match");
+        assertTrue(song0.CanBePurchased, "First song should be purchasable");
+        assertEq(song0.Price, 1000, "First song price should match");
+
+        SongDB.Metadata memory song1 = songDB.getMetadata(songIds[1]);
+        assertEq(song1.Title, "Batch Song Two", "Second song title should match");
+        assertEq(song1.PrincipalArtistId, ARTIST_1_ID, "Second song principal artist should match");
+        assertFalse(song1.CanBePurchased, "Second song should not be purchasable");
+        assertEq(song1.Price, 2000, "Second song price should match");
+    }
+
+    function test_unit_correct_setSplitOfSongs() public {
+        uint256 songID1 = _execute_orchestrator_registerSong(
+            ARTIST_1.Address,
+            "Split Batch Song One",
+            ARTIST_1_ID,
+            new uint256[](0),
+            "https://arweave.net/split1MediaURI",
+            "https://arweave.net/split1MetadataURI",
+            true,
+            1000
+        );
+
+        uint256 songID2 = _execute_orchestrator_registerSong(
+            ARTIST_1.Address,
+            "Split Batch Song Two",
+            ARTIST_1_ID,
+            new uint256[](0),
+            "https://arweave.net/split2MediaURI",
+            "https://arweave.net/split2MetadataURI",
+            true,
+            2000
+        );
+
+        uint256[] memory songIds = new uint256[](2);
+        songIds[0] = songID1;
+        songIds[1] = songID2;
+
+        SplitterDB.Metadata[][] memory allSplits = new SplitterDB.Metadata[][](2);
+
+        allSplits[0] = new SplitterDB.Metadata[](2);
+        allSplits[0][0] = SplitterDB.Metadata({id: ARTIST_1_ID, splitBasisPoints: 7000});
+        allSplits[0][1] = SplitterDB.Metadata({id: ARTIST_2_ID, splitBasisPoints: 3000});
+
+        allSplits[1] = new SplitterDB.Metadata[](2);
+        allSplits[1][0] = SplitterDB.Metadata({id: ARTIST_1_ID, splitBasisPoints: 5000});
+        allSplits[1][1] = SplitterDB.Metadata({id: ARTIST_3_ID, splitBasisPoints: 5000});
+
+        vm.startPrank(ARTIST_1.Address);
+        orchestrator.setSplitOfSongs(songIds, allSplits);
+        vm.stopPrank();
+
+        SplitterDB.Metadata[] memory split0 = splitterDB.getSplits(false, songID1);
+        assertEq(split0.length, 2, "Song 1 split length should be 2");
+        assertEq(split0[0].id, ARTIST_1_ID, "Song 1 split[0] id should match");
+        assertEq(split0[0].splitBasisPoints, 7000, "Song 1 split[0] basis points should match");
+        assertEq(split0[1].id, ARTIST_2_ID, "Song 1 split[1] id should match");
+        assertEq(split0[1].splitBasisPoints, 3000, "Song 1 split[1] basis points should match");
+
+        SplitterDB.Metadata[] memory split1 = splitterDB.getSplits(false, songID2);
+        assertEq(split1.length, 2, "Song 2 split length should be 2");
+        assertEq(split1[0].id, ARTIST_1_ID, "Song 2 split[0] id should match");
+        assertEq(split1[0].splitBasisPoints, 5000, "Song 2 split[0] basis points should match");
+        assertEq(split1[1].id, ARTIST_3_ID, "Song 2 split[1] id should match");
+        assertEq(split1[1].splitBasisPoints, 5000, "Song 2 split[1] basis points should match");
     }
 }
