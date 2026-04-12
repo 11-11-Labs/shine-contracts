@@ -41,6 +41,12 @@ contract DeployScript is Script {
             address(splitterDB)
         );
 
+        console.log("Orchestrator deployed at:", address(orchestrator));
+        console.log("AlbumDB deployed at:", address(albumDB));
+        console.log("SongDB deployed at:", address(songDB));
+        console.log("UserDB deployed at:", address(userDB));
+        console.log("SplitterDB deployed at:", address(splitterDB));
+
         vm.stopBroadcast();
     }
 }
