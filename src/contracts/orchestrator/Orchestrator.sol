@@ -10,7 +10,7 @@ pragma solidity ^0.8.20;
  * @title Shine Orchestrator
  * @author 11:11 Labs 
  * @notice Central orchestration contract that coordinates all interactions with database contracts
- *         (AlbumDB, ArtistDB, SongDB, UserDB). Manages user/artist registration, purchases, 
+ *         (AlbumDB, ArtistDB, SongDB, UserDB, SplitterDB). Manages user/artist registration, purchases, 
  *         payments, donations, and administrative functions for the Shine music platform.
  * @dev Acts as the sole owner of all database contracts, enforcing access control and ensuring
  *      consistent business logic across the platform. Handles stablecoin payments, fee collection,
@@ -59,6 +59,7 @@ contract Orchestrator is Ownable {
 
     /**
      * @notice Validates that the sender is the owner of the specified user ID
+     * @dev Reverts with AddressIsNotOwnerOfUserId if msg.sender does not match the address stored for userId
      * @param userId The user ID to validate against the sender
      */
     modifier senderIsUserId(uint256 userId) {
@@ -69,6 +70,7 @@ contract Orchestrator is Ownable {
 
     /**
      * @notice Validates that the specified user ID exists
+     * @dev Reverts with UserIdDoesNotExist if the userId is not registered in UserDB
      * @param userId The user ID to check for existence
      */
     modifier userIdExists(uint256 userId) {
@@ -78,6 +80,7 @@ contract Orchestrator is Ownable {
 
     /**
      * @notice Validates that the specified song ID exists
+     * @dev Reverts with SongIdDoesNotExist if the songId is not registered in SongDB
      * @param songId The song ID to check for existence
      */
     modifier songIdExists(uint256 songId) {
@@ -87,6 +90,7 @@ contract Orchestrator is Ownable {
 
     /**
      * @notice Validates that the specified album ID exists
+     * @dev Reverts with a generic revert if the albumId is not registered in AlbumDB
      * @param albumId The album ID to check for existence
      */
     modifier albumIdExists(uint256 albumId) {
@@ -94,23 +98,39 @@ contract Orchestrator is Ownable {
         _;
     }
 
+    /**
+     * @notice Ensures shop operations (purchases) are not paused
+     * @dev Reverts with ShopOperationsArePaused if the shop breaker is inactive
+     */
     modifier checkShopBreaker() {
         if (!breaker.shopOperations) revert ErrorsLib.ShopOperationsArePaused();
         _;
     }
 
+    /**
+     * @notice Ensures deposit operations are not paused
+     * @dev Reverts with DepositOperationsArePaused if the deposit breaker is inactive
+     */
     modifier checkDepositBreaker() {
         if (!breaker.depositOperations)
             revert ErrorsLib.DepositOperationsArePaused();
         _;
     }
 
+    /**
+     * @notice Ensures user registration is not paused
+     * @dev Reverts with UserRegistrationIsPaused if the user registration breaker is inactive
+     */
     modifier checkUserRegistrationBreaker() {
         if (!breaker.userRegistration)
             revert ErrorsLib.UserRegistrationIsPaused();
         _;
     }
 
+    /**
+     * @notice Ensures content registration is not paused
+     * @dev Reverts with ContentRegistrationIsPaused if the content registration breaker is inactive
+     */
     modifier checkContentRegistrationBreaker() {
         if (!breaker.contentRegistration)
             revert ErrorsLib.ContentRegistrationIsPaused();
@@ -653,6 +673,12 @@ contract Orchestrator is Ownable {
         );
     }
 
+    /**
+     * @notice Sets the revenue split metadata for an album
+     * @dev Only the principal artist can set splits. Validates all user IDs in splits exist.
+     * @param albumId The album ID to set splits for
+     * @param splitMetadata Array of SplitterDB.Metadata structs defining the revenue splits
+     */
     function setSplitOfAlbum(
         uint256 albumId,
         SplitterDB.Metadata[] calldata splitMetadata
@@ -747,6 +773,7 @@ contract Orchestrator is Ownable {
      * @param _dbalbum Address of the AlbumDB contract
      * @param _dbsong Address of the SongDB contract
      * @param _dbuser Address of the UserDB contract
+     * @param _dbsplitter Address of the SplitterDB contract
      */
     function setDatabaseAddresses(
         address _dbalbum,
