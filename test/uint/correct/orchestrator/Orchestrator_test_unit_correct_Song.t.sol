@@ -6,6 +6,7 @@ import "testing/Constants.sol";
 
 import {SongDB} from "@shine/contracts/database/SongDB.sol";
 import {SplitterDB} from "@shine/contracts/database/SplitterDB.sol";
+import {StructsLib} from "@shine/contracts/orchestrator/library/StructsLib.sol";
 
 contract Orchestrator_test_unit_correct_Song is Constants {
     AccountData ARTIST_3 = WILDCARD_ACCOUNT;
@@ -43,15 +44,19 @@ contract Orchestrator_test_unit_correct_Song is Constants {
         artistIDs[0] = ARTIST_2_ID;
         artistIDs[1] = ARTIST_3_ID;
 
-        uint256 songID = orchestrator.registerSong(
-            "Song Title",
-            ARTIST_1_ID,
-            artistIDs,
-            "https://arweave.net/mediaURI",
-            "https://arweave.net/metadataURI",
-            true,
-            1000
-        );
+        StructsLib.RegisterSongInput[] memory inputs = new StructsLib.RegisterSongInput[](1);
+        inputs[0] = StructsLib.RegisterSongInput({
+            title: "Song Title",
+            principalArtistId: ARTIST_1_ID,
+            artistIDs: artistIDs,
+            mediaURI: "https://arweave.net/mediaURI",
+            metadataURI: "https://arweave.net/metadataURI",
+            canBePurchased: true,
+            netprice: 1000
+        });
+
+        uint256[] memory songIds = orchestrator.registerSong(inputs);
+        uint256 songID = songIds[0];
 
         vm.stopPrank();
 
@@ -452,41 +457,32 @@ contract Orchestrator_test_unit_correct_Song is Constants {
     }
 
     function test_unit_correct_registerSongOnBatch() public {
-        string[] memory titles = new string[](2);
-        titles[0] = "Batch Song One";
-        titles[1] = "Batch Song Two";
+        uint256[] memory artistIDs0 = new uint256[](1);
+        artistIDs0[0] = ARTIST_2_ID;
+        uint256[] memory artistIDs1 = new uint256[](0);
 
-        uint256[][] memory artistIDs = new uint256[][](2);
-        artistIDs[0] = new uint256[](1);
-        artistIDs[0][0] = ARTIST_2_ID;
-        artistIDs[1] = new uint256[](0);
-
-        string[] memory mediaURIs = new string[](2);
-        mediaURIs[0] = "https://arweave.net/batch1MediaURI";
-        mediaURIs[1] = "https://arweave.net/batch2MediaURI";
-
-        string[] memory metadataURIs = new string[](2);
-        metadataURIs[0] = "https://arweave.net/batch1MetadataURI";
-        metadataURIs[1] = "https://arweave.net/batch2MetadataURI";
-
-        bool[] memory canBePurchased = new bool[](2);
-        canBePurchased[0] = true;
-        canBePurchased[1] = false;
-
-        uint256[] memory netprices = new uint256[](2);
-        netprices[0] = 1000;
-        netprices[1] = 2000;
+        StructsLib.RegisterSongInput[] memory inputs = new StructsLib.RegisterSongInput[](2);
+        inputs[0] = StructsLib.RegisterSongInput({
+            title: "Batch Song One",
+            principalArtistId: ARTIST_1_ID,
+            artistIDs: artistIDs0,
+            mediaURI: "https://arweave.net/batch1MediaURI",
+            metadataURI: "https://arweave.net/batch1MetadataURI",
+            canBePurchased: true,
+            netprice: 1000
+        });
+        inputs[1] = StructsLib.RegisterSongInput({
+            title: "Batch Song Two",
+            principalArtistId: ARTIST_1_ID,
+            artistIDs: artistIDs1,
+            mediaURI: "https://arweave.net/batch2MediaURI",
+            metadataURI: "https://arweave.net/batch2MetadataURI",
+            canBePurchased: false,
+            netprice: 2000
+        });
 
         vm.startPrank(ARTIST_1.Address);
-        uint256[] memory songIds = orchestrator.registerSongOnBatch(
-            titles,
-            ARTIST_1_ID,
-            artistIDs,
-            mediaURIs,
-            metadataURIs,
-            canBePurchased,
-            netprices
-        );
+        uint256[] memory songIds = orchestrator.registerSong(inputs);
         vm.stopPrank();
 
         assertEq(songIds.length, 2, "Should return 2 song IDs");

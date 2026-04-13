@@ -7,6 +7,7 @@ import "testing/Constants.sol";
 import {SongDB} from "@shine/contracts/database/SongDB.sol";
 import {SplitterDB} from "@shine/contracts/database/SplitterDB.sol";
 import {ErrorsLib} from "@shine/contracts/orchestrator/library/ErrorsLib.sol";
+import {StructsLib} from "@shine/contracts/orchestrator/library/StructsLib.sol";
 import {ERC20} from "@solady/tokens/ERC20.sol";
 
 contract Orchestrator_test_unit_revert_Song is Constants {
@@ -46,6 +47,17 @@ contract Orchestrator_test_unit_revert_Song is Constants {
         artistIDs[0] = ARTIST_2_ID;
         artistIDs[1] = 1000000010000001;
 
+        StructsLib.RegisterSongInput[] memory inputs = new StructsLib.RegisterSongInput[](1);
+        inputs[0] = StructsLib.RegisterSongInput({
+            title: "Song Title",
+            principalArtistId: ARTIST_1_ID,
+            artistIDs: artistIDs,
+            mediaURI: "https://arweave.net/mediaURI",
+            metadataURI: "https://arweave.net/metadataURI",
+            canBePurchased: true,
+            netprice: 1000
+        });
+
         vm.expectRevert(
             abi.encodeWithSelector(
                 ErrorsLib.UserIdDoesNotExist.selector,
@@ -53,15 +65,7 @@ contract Orchestrator_test_unit_revert_Song is Constants {
             )
         );
 
-        orchestrator.registerSong(
-            "Song Title",
-            ARTIST_1_ID,
-            artistIDs,
-            "https://arweave.net/mediaURI",
-            "https://arweave.net/metadataURI",
-            true,
-            1000
-        );
+        orchestrator.registerSong(inputs);
 
         vm.stopPrank();
     }
@@ -73,16 +77,19 @@ contract Orchestrator_test_unit_revert_Song is Constants {
         artistIDs[0] = ARTIST_2_ID;
         artistIDs[1] = ARTIST_3_ID;
 
+        StructsLib.RegisterSongInput[] memory inputs = new StructsLib.RegisterSongInput[](1);
+        inputs[0] = StructsLib.RegisterSongInput({
+            title: "",
+            principalArtistId: ARTIST_1_ID,
+            artistIDs: artistIDs,
+            mediaURI: "https://arweave.net/mediaURI",
+            metadataURI: "https://arweave.net/metadataURI",
+            canBePurchased: true,
+            netprice: 1000
+        });
+
         vm.expectRevert(ErrorsLib.TitleCannotBeEmpty.selector);
-        orchestrator.registerSong(
-            "",
-            ARTIST_1_ID,
-            artistIDs,
-            "https://arweave.net/mediaURI",
-            "https://arweave.net/metadataURI",
-            true,
-            1000
-        );
+        orchestrator.registerSong(inputs);
 
         vm.stopPrank();
     }
@@ -242,16 +249,19 @@ contract Orchestrator_test_unit_revert_Song is Constants {
 
         uint256[] memory artistIDs = new uint256[](0);
 
+        StructsLib.RegisterSongInput[] memory inputs = new StructsLib.RegisterSongInput[](1);
+        inputs[0] = StructsLib.RegisterSongInput({
+            title: "Song Title",
+            principalArtistId: ARTIST_1_ID,
+            artistIDs: artistIDs,
+            mediaURI: "https://arweave.net/mediaURI",
+            metadataURI: "https://arweave.net/metadataURI",
+            canBePurchased: true,
+            netprice: 1000
+        });
+
         vm.expectRevert(ErrorsLib.AddressIsNotOwnerOfUserId.selector);
-        orchestrator.registerSong(
-            "Song Title",
-            ARTIST_1_ID,
-            artistIDs,
-            "https://arweave.net/mediaURI",
-            "https://arweave.net/metadataURI",
-            true,
-            1000
-        );
+        orchestrator.registerSong(inputs);
 
         vm.stopPrank();
     }
@@ -510,99 +520,60 @@ contract Orchestrator_test_unit_revert_Song is Constants {
         vm.stopPrank();
     }
 
-    function test_unit_revert_registerSongOnBatch__AddressIsNotOwnerOfUserId()
-        public
-    {
-        string[] memory titles = new string[](1);
-        titles[0] = "A Song";
+    function test_unit_revert_registerSong__DataIsEmpty() public {
+        vm.startPrank(ARTIST_1.Address);
 
-        uint256[][] memory artistIDs = new uint256[][](1);
-        artistIDs[0] = new uint256[](0);
+        StructsLib.RegisterSongInput[] memory inputs = new StructsLib.RegisterSongInput[](0);
 
-        string[] memory mediaURIs = new string[](1);
-        mediaURIs[0] = "https://arweave.net/mediaURI";
+        vm.expectRevert(ErrorsLib.DataIsEmpty.selector);
+        orchestrator.registerSong(inputs);
 
-        string[] memory metadataURIs = new string[](1);
-        metadataURIs[0] = "https://arweave.net/metadataURI";
-
-        bool[] memory canBePurchased = new bool[](1);
-        canBePurchased[0] = true;
-
-        uint256[] memory netprices = new uint256[](1);
-        netprices[0] = 1000;
-
-        vm.startPrank(ARTIST_2.Address);
-        vm.expectRevert(ErrorsLib.AddressIsNotOwnerOfUserId.selector);
-        orchestrator.registerSongOnBatch(
-            titles,
-            ARTIST_1_ID,
-            artistIDs,
-            mediaURIs,
-            metadataURIs,
-            canBePurchased,
-            netprices
-        );
         vm.stopPrank();
     }
 
-    function test_unit_revert_registerSongOnBatch__TitleCannotBeEmpty() public {
-        string[] memory titles = new string[](2);
-        titles[0] = "Valid Title";
-        titles[1] = "";
+    function test_unit_revert_registerSong__TitleCannotBeEmpty_inBatch() public {
+        uint256[] memory emptyArtists = new uint256[](0);
 
-        uint256[][] memory artistIDs = new uint256[][](2);
-        artistIDs[0] = new uint256[](0);
-        artistIDs[1] = new uint256[](0);
-
-        string[] memory mediaURIs = new string[](2);
-        mediaURIs[0] = "https://arweave.net/media1URI";
-        mediaURIs[1] = "https://arweave.net/media2URI";
-
-        string[] memory metadataURIs = new string[](2);
-        metadataURIs[0] = "https://arweave.net/metadata1URI";
-        metadataURIs[1] = "https://arweave.net/metadata2URI";
-
-        bool[] memory canBePurchased = new bool[](2);
-        canBePurchased[0] = true;
-        canBePurchased[1] = true;
-
-        uint256[] memory netprices = new uint256[](2);
-        netprices[0] = 1000;
-        netprices[1] = 1000;
+        StructsLib.RegisterSongInput[] memory inputs = new StructsLib.RegisterSongInput[](2);
+        inputs[0] = StructsLib.RegisterSongInput({
+            title: "Valid Title",
+            principalArtistId: ARTIST_1_ID,
+            artistIDs: emptyArtists,
+            mediaURI: "https://arweave.net/media1URI",
+            metadataURI: "https://arweave.net/metadata1URI",
+            canBePurchased: true,
+            netprice: 1000
+        });
+        inputs[1] = StructsLib.RegisterSongInput({
+            title: "",
+            principalArtistId: ARTIST_1_ID,
+            artistIDs: emptyArtists,
+            mediaURI: "https://arweave.net/media2URI",
+            metadataURI: "https://arweave.net/metadata2URI",
+            canBePurchased: true,
+            netprice: 1000
+        });
 
         vm.startPrank(ARTIST_1.Address);
         vm.expectRevert(ErrorsLib.TitleCannotBeEmpty.selector);
-        orchestrator.registerSongOnBatch(
-            titles,
-            ARTIST_1_ID,
-            artistIDs,
-            mediaURIs,
-            metadataURIs,
-            canBePurchased,
-            netprices
-        );
+        orchestrator.registerSong(inputs);
         vm.stopPrank();
     }
 
-    function test_unit_revert_registerSongOnBatch__UserIdDoesNotExist() public {
-        string[] memory titles = new string[](1);
-        titles[0] = "Valid Title";
+    function test_unit_revert_registerSong__UserIdDoesNotExist_inBatch() public {
+        uint256[] memory badArtists = new uint256[](1);
+        badArtists[0] = 99999999;
 
-        uint256[][] memory artistIDs = new uint256[][](1);
-        artistIDs[0] = new uint256[](1);
-        artistIDs[0][0] = 99999999;
-
-        string[] memory mediaURIs = new string[](1);
-        mediaURIs[0] = "https://arweave.net/mediaURI";
-
-        string[] memory metadataURIs = new string[](1);
-        metadataURIs[0] = "https://arweave.net/metadataURI";
-
-        bool[] memory canBePurchased = new bool[](1);
-        canBePurchased[0] = true;
-
-        uint256[] memory netprices = new uint256[](1);
-        netprices[0] = 1000;
+        StructsLib.RegisterSongInput[] memory inputs = new StructsLib.RegisterSongInput[](1);
+        inputs[0] = StructsLib.RegisterSongInput({
+            title: "Valid Title",
+            principalArtistId: ARTIST_1_ID,
+            artistIDs: badArtists,
+            mediaURI: "https://arweave.net/mediaURI",
+            metadataURI: "https://arweave.net/metadataURI",
+            canBePurchased: true,
+            netprice: 1000
+        });
 
         vm.startPrank(ARTIST_1.Address);
         vm.expectRevert(
@@ -611,15 +582,7 @@ contract Orchestrator_test_unit_revert_Song is Constants {
                 99999999
             )
         );
-        orchestrator.registerSongOnBatch(
-            titles,
-            ARTIST_1_ID,
-            artistIDs,
-            mediaURIs,
-            metadataURIs,
-            canBePurchased,
-            netprices
-        );
+        orchestrator.registerSong(inputs);
         vm.stopPrank();
     }
     
