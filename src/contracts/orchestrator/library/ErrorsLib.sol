@@ -52,6 +52,9 @@ library ErrorsLib {
     /// @dev Thrown when attempting to create an album with songs from different principal artists
     error ListCannotContainSongsFromDifferentPrincipalArtist();
 
+    /// @dev Thrown when a content is empty or zero-length
+    error DataIsEmpty();
+
     //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 Content Update Errors 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋
 
     /// @dev Thrown when a proposed value is not greater than the current value
