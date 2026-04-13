@@ -62,4 +62,16 @@ library StructsLib {
         address proposed;
         uint256 timeToExecute;
     }
+
+    //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 Function input Management 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋
+    
+    struct RegisterSongInput {
+        string title;
+        uint256 principalArtistId;
+        uint256[] artistIDs;
+        string mediaURI;
+        string metadataURI;
+        bool canBePurchased;
+        uint256 netprice;
+    }
 }
