@@ -296,13 +296,14 @@ contract Orchestrator is Ownable {
      * @dev Batch version of registerSong. Validates all inputs for each song. Reverts if any song data is invalid.
      * @param inputs An array of RegisterSongInput structs containing song registration data for each song
      *               the inputs are composed of
-    *               - title: Display name of the song
-    *               - principalArtistId: The main artist ID (must be the sender)
-    *               - artistIDs: Array of featured artist IDs (can be empty)
-    *               - mediaURI: URI pointing to the song audio/media (e.g., IPFS or CDN)
-    *               - metadataURI: URI pointing to song metadata (e.g., IPFS)
-    *               - canBePurchased: Whether the song is available for purchase
-    *               - netprice: The net artist price (before platform fees)
+     *               - title: Display name of the song
+     *               - principalArtistId: The main artist ID (must be the sender)
+     *               - artistIDs: Array of featured artist IDs (can be empty)
+     *               - mediaURI: URI pointing to the song audio/media (e.g., IPFS or CDN)
+     *               - metadataURI: URI pointing to song metadata (e.g., IPFS)
+     *               - canBePurchased: Whether the song is available for purchase
+     *               - netprice: The net artist price (before platform fees)
+     *               - splitMetadata: Array of SplitterDB.Metadata structs defining revenue splits for the song
      * @return songIds An array of newly assigned song IDs corresponding to each input
      */
     function registerSong(
@@ -328,13 +329,11 @@ contract Orchestrator is Ownable {
                 revert ErrorsLib.TitleCannotBeEmpty();
 
             uint256[] calldata featuredArtists = inputs[i].artistIDs;
-            
+
             if (featuredArtists.length > 0) {
                 for (uint256 j = 0; j < featuredArtists.length; ) {
                     if (!userDB.exists(featuredArtists[j]))
-                        revert ErrorsLib.UserIdDoesNotExist(
-                            featuredArtists[j]
-                        );
+                        revert ErrorsLib.UserIdDoesNotExist(featuredArtists[j]);
 
                     unchecked {
                         j++;
@@ -351,6 +350,21 @@ contract Orchestrator is Ownable {
                 inputs[i].canBePurchased,
                 inputs[i].netprice
             );
+
+            if (inputs[i].splitMetadata.length > 0) {
+                for (uint256 j = 0; j < inputs[i].splitMetadata.length; ) {
+                    if (!userDB.exists(inputs[i].splitMetadata[j].id))
+                        revert ErrorsLib.UserIdDoesNotExist(
+                            inputs[i].splitMetadata[j].id
+                        );
+
+                    unchecked {
+                        j++;
+                    }
+                }
+
+                splitterDB.set(false, songIds[i], inputs[i].splitMetadata);
+            }
 
             unchecked {
                 i++;
@@ -409,7 +423,7 @@ contract Orchestrator is Ownable {
      * @param songId The song ID to set splits for
      * @param splitMetadata Array of SplitterDB.Metadata structs defining the revenue splits
      */
-    function setSplitOfSong(
+    function changeSplitOfSong(
         uint256 songId,
         SplitterDB.Metadata[] calldata splitMetadata
     )
@@ -427,40 +441,6 @@ contract Orchestrator is Ownable {
         }
 
         splitterDB.set(false, songId, splitMetadata);
-    }
-
-    /**
-     * @notice Sets the revenue split metadata for multiple songs in batch
-     * @dev Only the principal artist can set splits. Validates all user IDs in splits exist.
-     * @param songIds Array of song IDs to set splits for
-     * @param splitMetadata Array of arrays of SplitterDB.Metadata structs for each song
-     */
-    function setSplitOfSongs(
-        uint256[] calldata songIds,
-        SplitterDB.Metadata[][] calldata splitMetadata
-    ) external {
-        uint256 length = songIds.length;
-
-        for (uint256 i = 0; i < length; i++) {
-            if (!songDB.exists(songIds[i]))
-                revert ErrorsLib.SongIdDoesNotExist(songIds[i]);
-
-            if (
-                songDB.getPrincipalArtistId(songIds[i]) !=
-                userDB.getId(msg.sender)
-            ) revert ErrorsLib.AddressIsNotOwnerOfUserId();
-
-            for (uint256 j = 0; j < splitMetadata[i].length; ) {
-                if (!userDB.exists(splitMetadata[i][j].id))
-                    revert ErrorsLib.UserIdDoesNotExist(splitMetadata[i][j].id);
-
-                unchecked {
-                    j++;
-                }
-            }
-
-            splitterDB.set(false, songIds[i], splitMetadata[i]);
-        }
     }
 
     /**

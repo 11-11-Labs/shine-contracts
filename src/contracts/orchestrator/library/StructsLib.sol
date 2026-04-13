@@ -16,9 +16,11 @@ pragma solidity ^0.8.20;
  *      and administrative controls.
  */
 
+import {SplitterDB} from "@shine/contracts/database/SplitterDB.sol";
+
 library StructsLib {
     //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 Database Management 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋
-    
+
     /**
      * @notice Stores the contract addresses of all database contracts
      * @param album Address of the AlbumDB contract
@@ -33,7 +35,7 @@ library StructsLib {
     }
 
     //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 Operational Control 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋
-    
+
     /**
      * @notice Tracks operational breaker flags for contract lifecycle management
      * @dev Breaker flags prevent accidental reinitialization or reentrancy
@@ -49,7 +51,7 @@ library StructsLib {
     }
 
     //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 Stablecoin Management 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋
-    
+
     /**
      * @notice Manages stablecoin address with time-locked upgrades
      * @dev Implements a two-step process: propose new address, then execute after timelock
@@ -64,7 +66,7 @@ library StructsLib {
     }
 
     //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 Function input Management 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋
-    
+
     struct RegisterSongInput {
         string title;
         uint256 principalArtistId;
@@ -73,5 +75,6 @@ library StructsLib {
         string metadataURI;
         bool canBePurchased;
         uint256 netprice;
+        SplitterDB.Metadata[] splitMetadata;
     }
 }
