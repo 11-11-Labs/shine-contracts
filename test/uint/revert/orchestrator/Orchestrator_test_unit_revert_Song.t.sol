@@ -47,7 +47,16 @@ contract Orchestrator_test_unit_revert_Song is Constants {
         artistIDs[0] = ARTIST_2_ID;
         artistIDs[1] = 1000000010000001;
 
-        StructsLib.RegisterSongInput[] memory inputs = new StructsLib.RegisterSongInput[](1);
+        SplitterDB.Metadata[] memory splitMetadata = new SplitterDB.Metadata[](
+            1
+        );
+        splitMetadata[0] = SplitterDB.Metadata({
+            id: ARTIST_1_ID,
+            splitBasisPoints: 10000
+        });
+
+        StructsLib.RegisterSongInput[]
+            memory inputs = new StructsLib.RegisterSongInput[](1);
         inputs[0] = StructsLib.RegisterSongInput({
             title: "Song Title",
             principalArtistId: ARTIST_1_ID,
@@ -55,7 +64,8 @@ contract Orchestrator_test_unit_revert_Song is Constants {
             mediaURI: "https://arweave.net/mediaURI",
             metadataURI: "https://arweave.net/metadataURI",
             canBePurchased: true,
-            netprice: 1000
+            netprice: 1000,
+            splitMetadata: splitMetadata
         });
 
         vm.expectRevert(
@@ -77,7 +87,16 @@ contract Orchestrator_test_unit_revert_Song is Constants {
         artistIDs[0] = ARTIST_2_ID;
         artistIDs[1] = ARTIST_3_ID;
 
-        StructsLib.RegisterSongInput[] memory inputs = new StructsLib.RegisterSongInput[](1);
+        SplitterDB.Metadata[] memory splitMetadata = new SplitterDB.Metadata[](
+            1
+        );
+        splitMetadata[0] = SplitterDB.Metadata({
+            id: ARTIST_1_ID,
+            splitBasisPoints: 10000
+        });
+
+        StructsLib.RegisterSongInput[]
+            memory inputs = new StructsLib.RegisterSongInput[](1);
         inputs[0] = StructsLib.RegisterSongInput({
             title: "",
             principalArtistId: ARTIST_1_ID,
@@ -85,10 +104,49 @@ contract Orchestrator_test_unit_revert_Song is Constants {
             mediaURI: "https://arweave.net/mediaURI",
             metadataURI: "https://arweave.net/metadataURI",
             canBePurchased: true,
-            netprice: 1000
+            netprice: 1000,
+            splitMetadata: splitMetadata
         });
 
         vm.expectRevert(ErrorsLib.TitleCannotBeEmpty.selector);
+        orchestrator.registerSong(inputs);
+
+        vm.stopPrank();
+    }
+
+    function test_unit_revert_registerSong_SplitMetadataUserIdDoesNotExist()
+        public
+    {
+        vm.startPrank(ARTIST_1.Address);
+
+        uint256[] memory artistIDs = new uint256[](0);
+        SplitterDB.Metadata[] memory splitMetadata = new SplitterDB.Metadata[](
+            1
+        );
+        splitMetadata[0] = SplitterDB.Metadata({
+            id: 99999999,
+            splitBasisPoints: 10000
+        });
+
+        StructsLib.RegisterSongInput[]
+            memory inputs = new StructsLib.RegisterSongInput[](1);
+        inputs[0] = StructsLib.RegisterSongInput({
+            title: "Song With Split",
+            principalArtistId: ARTIST_1_ID,
+            artistIDs: artistIDs,
+            mediaURI: "https://arweave.net/mediaURI",
+            metadataURI: "https://arweave.net/metadataURI",
+            canBePurchased: true,
+            netprice: 1000,
+            splitMetadata: splitMetadata
+        });
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ErrorsLib.UserIdDoesNotExist.selector,
+                99999999
+            )
+        );
         orchestrator.registerSong(inputs);
 
         vm.stopPrank();
@@ -197,8 +255,9 @@ contract Orchestrator_test_unit_revert_Song is Constants {
         vm.stopPrank();
     }
 
-
-    function test_unit_revert_changeSongPrice_AddressIsNotOwnerOfUserId() public {
+    function test_unit_revert_changeSongPrice_AddressIsNotOwnerOfUserId()
+        public
+    {
         uint256[] memory artistIDs = new uint256[](1);
         artistIDs[0] = ARTIST_2_ID;
 
@@ -219,11 +278,9 @@ contract Orchestrator_test_unit_revert_Song is Constants {
         vm.stopPrank();
     }
 
-
-    
-    
-
-    function test_unit_revert_changeSongPurchaseability_AddressIsNotOwnerOfUserId() public {
+    function test_unit_revert_changeSongPurchaseability_AddressIsNotOwnerOfUserId()
+        public
+    {
         uint256[] memory artistIDs = new uint256[](1);
         artistIDs[0] = ARTIST_2_ID;
 
@@ -249,7 +306,16 @@ contract Orchestrator_test_unit_revert_Song is Constants {
 
         uint256[] memory artistIDs = new uint256[](0);
 
-        StructsLib.RegisterSongInput[] memory inputs = new StructsLib.RegisterSongInput[](1);
+        SplitterDB.Metadata[] memory splitMetadata = new SplitterDB.Metadata[](
+            1
+        );
+        splitMetadata[0] = SplitterDB.Metadata({
+            id: ARTIST_1_ID,
+            splitBasisPoints: 10000
+        });
+
+        StructsLib.RegisterSongInput[]
+            memory inputs = new StructsLib.RegisterSongInput[](1);
         inputs[0] = StructsLib.RegisterSongInput({
             title: "Song Title",
             principalArtistId: ARTIST_1_ID,
@@ -257,7 +323,8 @@ contract Orchestrator_test_unit_revert_Song is Constants {
             mediaURI: "https://arweave.net/mediaURI",
             metadataURI: "https://arweave.net/metadataURI",
             canBePurchased: true,
-            netprice: 1000
+            netprice: 1000,
+            splitMetadata: splitMetadata
         });
 
         vm.expectRevert(ErrorsLib.AddressIsNotOwnerOfUserId.selector);
@@ -266,7 +333,9 @@ contract Orchestrator_test_unit_revert_Song is Constants {
         vm.stopPrank();
     }
 
-    function test_unit_revert_setSplitOfSong_AddressIsNotOwnerOfUserId() public {
+    function test_unit_revert_changeSplitOfSong_AddressIsNotOwnerOfUserId()
+        public
+    {
         uint256[] memory artistIDs = new uint256[](0);
 
         uint256 songID = _execute_orchestrator_registerSong(
@@ -280,16 +349,21 @@ contract Orchestrator_test_unit_revert_Song is Constants {
             1000
         );
 
-        SplitterDB.Metadata[] memory splitMetadata = new SplitterDB.Metadata[](1);
-        splitMetadata[0] = SplitterDB.Metadata({id: ARTIST_1_ID, splitBasisPoints: 10000});
+        SplitterDB.Metadata[] memory splitMetadata = new SplitterDB.Metadata[](
+            1
+        );
+        splitMetadata[0] = SplitterDB.Metadata({
+            id: ARTIST_1_ID,
+            splitBasisPoints: 10000
+        });
 
         vm.startPrank(ARTIST_2.Address);
         vm.expectRevert(ErrorsLib.AddressIsNotOwnerOfUserId.selector);
-        orchestrator.setSplitOfSong(songID, splitMetadata);
+        orchestrator.changeSplitOfSong(songID, splitMetadata);
         vm.stopPrank();
     }
 
-    function test_unit_revert_setSplitOfSong_UserIdDoesNotExist() public {
+    function test_unit_revert_changeSplitOfSong_UserIdDoesNotExist() public {
         uint256[] memory artistIDs = new uint256[](0);
 
         uint256 songID = _execute_orchestrator_registerSong(
@@ -303,19 +377,30 @@ contract Orchestrator_test_unit_revert_Song is Constants {
             1000
         );
 
-        SplitterDB.Metadata[] memory splitMetadata = new SplitterDB.Metadata[](2);
-        splitMetadata[0] = SplitterDB.Metadata({id: ARTIST_1_ID, splitBasisPoints: 5000});
-        splitMetadata[1] = SplitterDB.Metadata({id: 99999999, splitBasisPoints: 5000});
+        SplitterDB.Metadata[] memory splitMetadata = new SplitterDB.Metadata[](
+            2
+        );
+        splitMetadata[0] = SplitterDB.Metadata({
+            id: ARTIST_1_ID,
+            splitBasisPoints: 5000
+        });
+        splitMetadata[1] = SplitterDB.Metadata({
+            id: 99999999,
+            splitBasisPoints: 5000
+        });
 
         vm.startPrank(ARTIST_1.Address);
         vm.expectRevert(
-            abi.encodeWithSelector(ErrorsLib.UserIdDoesNotExist.selector, 99999999)
+            abi.encodeWithSelector(
+                ErrorsLib.UserIdDoesNotExist.selector,
+                99999999
+            )
         );
-        orchestrator.setSplitOfSong(songID, splitMetadata);
+        orchestrator.changeSplitOfSong(songID, splitMetadata);
         vm.stopPrank();
     }
 
-    function test_unit_revert_setSplitOfSong_DataIsEmpty() public {
+    function test_unit_revert_changeSplitOfSong_DataIsEmpty() public {
         uint256[] memory artistIDs = new uint256[](0);
 
         uint256 songID = _execute_orchestrator_registerSong(
@@ -329,15 +414,19 @@ contract Orchestrator_test_unit_revert_Song is Constants {
             1000
         );
 
-        SplitterDB.Metadata[] memory splitMetadata = new SplitterDB.Metadata[](0);
+        SplitterDB.Metadata[] memory splitMetadata = new SplitterDB.Metadata[](
+            0
+        );
 
         vm.startPrank(ARTIST_1.Address);
         vm.expectRevert(SplitterDB.DataIsEmpty.selector);
-        orchestrator.setSplitOfSong(songID, splitMetadata);
+        orchestrator.changeSplitOfSong(songID, splitMetadata);
         vm.stopPrank();
     }
 
-    function test_unit_revert_setSplitOfSong_MustSumToMaxBasisPoints() public {
+    function test_unit_revert_changeSplitOfSong_MustSumToMaxBasisPoints()
+        public
+    {
         uint256[] memory artistIDs = new uint256[](0);
 
         uint256 songID = _execute_orchestrator_registerSong(
@@ -351,13 +440,21 @@ contract Orchestrator_test_unit_revert_Song is Constants {
             1000
         );
 
-        SplitterDB.Metadata[] memory splitMetadata = new SplitterDB.Metadata[](2);
-        splitMetadata[0] = SplitterDB.Metadata({id: ARTIST_1_ID, splitBasisPoints: 3000});
-        splitMetadata[1] = SplitterDB.Metadata({id: ARTIST_2_ID, splitBasisPoints: 3000});
+        SplitterDB.Metadata[] memory splitMetadata = new SplitterDB.Metadata[](
+            2
+        );
+        splitMetadata[0] = SplitterDB.Metadata({
+            id: ARTIST_1_ID,
+            splitBasisPoints: 3000
+        });
+        splitMetadata[1] = SplitterDB.Metadata({
+            id: ARTIST_2_ID,
+            splitBasisPoints: 3000
+        });
 
         vm.startPrank(ARTIST_1.Address);
         vm.expectRevert(SplitterDB.MustSumToMaxBasisPoints.selector);
-        orchestrator.setSplitOfSong(songID, splitMetadata);
+        orchestrator.changeSplitOfSong(songID, splitMetadata);
         vm.stopPrank();
     }
 
@@ -523,7 +620,8 @@ contract Orchestrator_test_unit_revert_Song is Constants {
     function test_unit_revert_registerSong__DataIsEmpty() public {
         vm.startPrank(ARTIST_1.Address);
 
-        StructsLib.RegisterSongInput[] memory inputs = new StructsLib.RegisterSongInput[](0);
+        StructsLib.RegisterSongInput[]
+            memory inputs = new StructsLib.RegisterSongInput[](0);
 
         vm.expectRevert(ErrorsLib.DataIsEmpty.selector);
         orchestrator.registerSong(inputs);
@@ -531,10 +629,29 @@ contract Orchestrator_test_unit_revert_Song is Constants {
         vm.stopPrank();
     }
 
-    function test_unit_revert_registerSong__TitleCannotBeEmpty_inBatch() public {
+    function test_unit_revert_registerSong__TitleCannotBeEmpty_inBatch()
+        public
+    {
         uint256[] memory emptyArtists = new uint256[](0);
 
-        StructsLib.RegisterSongInput[] memory inputs = new StructsLib.RegisterSongInput[](2);
+        SplitterDB.Metadata[] memory splitMetadata0 = new SplitterDB.Metadata[](
+            1
+        );
+        splitMetadata0[0] = SplitterDB.Metadata({
+            id: ARTIST_1_ID,
+            splitBasisPoints: 10000
+        });
+
+        SplitterDB.Metadata[] memory splitMetadata1 = new SplitterDB.Metadata[](
+            1
+        );
+        splitMetadata1[0] = SplitterDB.Metadata({
+            id: ARTIST_1_ID,
+            splitBasisPoints: 10000
+        });
+
+        StructsLib.RegisterSongInput[]
+            memory inputs = new StructsLib.RegisterSongInput[](2);
         inputs[0] = StructsLib.RegisterSongInput({
             title: "Valid Title",
             principalArtistId: ARTIST_1_ID,
@@ -542,7 +659,8 @@ contract Orchestrator_test_unit_revert_Song is Constants {
             mediaURI: "https://arweave.net/media1URI",
             metadataURI: "https://arweave.net/metadata1URI",
             canBePurchased: true,
-            netprice: 1000
+            netprice: 1000,
+            splitMetadata: splitMetadata0
         });
         inputs[1] = StructsLib.RegisterSongInput({
             title: "",
@@ -551,7 +669,8 @@ contract Orchestrator_test_unit_revert_Song is Constants {
             mediaURI: "https://arweave.net/media2URI",
             metadataURI: "https://arweave.net/metadata2URI",
             canBePurchased: true,
-            netprice: 1000
+            netprice: 1000,
+            splitMetadata: splitMetadata1
         });
 
         vm.startPrank(ARTIST_1.Address);
@@ -560,11 +679,22 @@ contract Orchestrator_test_unit_revert_Song is Constants {
         vm.stopPrank();
     }
 
-    function test_unit_revert_registerSong__UserIdDoesNotExist_inBatch() public {
+    function test_unit_revert_registerSong__UserIdDoesNotExist_inBatch()
+        public
+    {
         uint256[] memory badArtists = new uint256[](1);
         badArtists[0] = 99999999;
 
-        StructsLib.RegisterSongInput[] memory inputs = new StructsLib.RegisterSongInput[](1);
+        SplitterDB.Metadata[] memory splitMetadata = new SplitterDB.Metadata[](
+            1
+        );
+        splitMetadata[0] = SplitterDB.Metadata({
+            id: ARTIST_1_ID,
+            splitBasisPoints: 10000
+        });
+
+        StructsLib.RegisterSongInput[]
+            memory inputs = new StructsLib.RegisterSongInput[](1);
         inputs[0] = StructsLib.RegisterSongInput({
             title: "Valid Title",
             principalArtistId: ARTIST_1_ID,
@@ -572,7 +702,8 @@ contract Orchestrator_test_unit_revert_Song is Constants {
             mediaURI: "https://arweave.net/mediaURI",
             metadataURI: "https://arweave.net/metadataURI",
             canBePurchased: true,
-            netprice: 1000
+            netprice: 1000,
+            splitMetadata: splitMetadata
         });
 
         vm.startPrank(ARTIST_1.Address);
@@ -583,109 +714,6 @@ contract Orchestrator_test_unit_revert_Song is Constants {
             )
         );
         orchestrator.registerSong(inputs);
-        vm.stopPrank();
-    }
-    
-    function test_unit_revert_setSplitOfSongs__SongIdDoesNotExist() public {
-        uint256[] memory songIds = new uint256[](1);
-        songIds[0] = 99999999;
-
-        SplitterDB.Metadata[][] memory allSplits = new SplitterDB.Metadata[][](1);
-        allSplits[0] = new SplitterDB.Metadata[](1);
-        allSplits[0][0] = SplitterDB.Metadata({id: ARTIST_1_ID, splitBasisPoints: 10000});
-
-        vm.startPrank(ARTIST_1.Address);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ErrorsLib.SongIdDoesNotExist.selector,
-                99999999
-            )
-        );
-        orchestrator.setSplitOfSongs(songIds, allSplits);
-        vm.stopPrank();
-    }
-
-    function test_unit_revert_setSplitOfSongs__AddressIsNotOwnerOfUserId()
-        public
-    {
-        uint256 songID = _execute_orchestrator_registerSong(
-            ARTIST_1.Address,
-            "Batch Split Song",
-            ARTIST_1_ID,
-            new uint256[](0),
-            "https://arweave.net/mediaURI",
-            "https://arweave.net/metadataURI",
-            true,
-            1000
-        );
-
-        uint256[] memory songIds = new uint256[](1);
-        songIds[0] = songID;
-
-        SplitterDB.Metadata[][] memory allSplits = new SplitterDB.Metadata[][](1);
-        allSplits[0] = new SplitterDB.Metadata[](1);
-        allSplits[0][0] = SplitterDB.Metadata({id: ARTIST_1_ID, splitBasisPoints: 10000});
-
-        vm.startPrank(ARTIST_2.Address);
-        vm.expectRevert(ErrorsLib.AddressIsNotOwnerOfUserId.selector);
-        orchestrator.setSplitOfSongs(songIds, allSplits);
-        vm.stopPrank();
-    }
-
-    function test_unit_revert_setSplitOfSongs__UserIdDoesNotExist() public {
-        uint256 songID = _execute_orchestrator_registerSong(
-            ARTIST_1.Address,
-            "Batch Split Song",
-            ARTIST_1_ID,
-            new uint256[](0),
-            "https://arweave.net/mediaURI",
-            "https://arweave.net/metadataURI",
-            true,
-            1000
-        );
-
-        uint256[] memory songIds = new uint256[](1);
-        songIds[0] = songID;
-
-        SplitterDB.Metadata[][] memory allSplits = new SplitterDB.Metadata[][](1);
-        allSplits[0] = new SplitterDB.Metadata[](2);
-        allSplits[0][0] = SplitterDB.Metadata({id: ARTIST_1_ID, splitBasisPoints: 5000});
-        allSplits[0][1] = SplitterDB.Metadata({id: 99999999, splitBasisPoints: 5000});
-
-        vm.startPrank(ARTIST_1.Address);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ErrorsLib.UserIdDoesNotExist.selector,
-                99999999
-            )
-        );
-        orchestrator.setSplitOfSongs(songIds, allSplits);
-        vm.stopPrank();
-    }
-
-    function test_unit_revert_setSplitOfSongs__MustSumToMaxBasisPoints() public {
-        uint256 songID = _execute_orchestrator_registerSong(
-            ARTIST_1.Address,
-            "Batch Split Song",
-            ARTIST_1_ID,
-            new uint256[](0),
-            "https://arweave.net/mediaURI",
-            "https://arweave.net/metadataURI",
-            true,
-            1000
-        );
-
-        uint256[] memory songIds = new uint256[](1);
-        songIds[0] = songID;
-
-        SplitterDB.Metadata[][] memory allSplits = new SplitterDB.Metadata[][](1);
-        allSplits[0] = new SplitterDB.Metadata[](2);
-        allSplits[0][0] = SplitterDB.Metadata({id: ARTIST_1_ID, splitBasisPoints: 3000});
-        allSplits[0][1] = SplitterDB.Metadata({id: ARTIST_2_ID, splitBasisPoints: 3000});
-
-        vm.startPrank(ARTIST_1.Address);
-        vm.expectRevert(SplitterDB.MustSumToMaxBasisPoints.selector);
-        orchestrator.setSplitOfSongs(songIds, allSplits);
         vm.stopPrank();
     }
 }

@@ -175,7 +175,8 @@ abstract contract Constants is Test {
             mediaURI: mediaURI,
             metadataURI: metadataURI,
             canBePurchased: canBePurchased,
-            netprice: netprice
+            netprice: netprice,
+            splitMetadata: new SplitterDB.Metadata[](0)
         });
         vm.startPrank(principalArtistAddress);
         uint256[] memory songIds = orchestrator.registerSong(inputs);
