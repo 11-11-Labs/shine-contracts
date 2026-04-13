@@ -292,105 +292,70 @@ contract Orchestrator is Ownable {
     //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 Song Management 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋
 
     /**
-     * @notice Registers a new song to the platform
-     * @dev Only the principal artist can register songs. Validates all featured artists exist.
-     *      Validates title is not empty. Song price should be the net artist rate.
-     * @param title Display name of the song
-     * @param principalArtistId The main artist ID (must be the sender)
-     * @param artistIDs Array of featured artist IDs (can be empty)
-     * @param mediaURI URI pointing to the song audio/media (e.g., IPFS or CDN)
-     * @param metadataURI URI pointing to song metadata (e.g., IPFS)
-     * @param canBePurchased Whether the song is available for purchase
-     * @param netprice The net artist price (before platform fees)
-     * @return The newly assigned song ID
+     * @notice Registers multiple or single songs in a single transaction
+     * @dev Batch version of registerSong. Validates all inputs for each song. Reverts if any song data is invalid.
+     * @param inputs An array of RegisterSongInput structs containing song registration data for each song
+     *               the inputs are composed of
+    *               - title: Display name of the song
+    *               - principalArtistId: The main artist ID (must be the sender)
+    *               - artistIDs: Array of featured artist IDs (can be empty)
+    *               - mediaURI: URI pointing to the song audio/media (e.g., IPFS or CDN)
+    *               - metadataURI: URI pointing to song metadata (e.g., IPFS)
+    *               - canBePurchased: Whether the song is available for purchase
+    *               - netprice: The net artist price (before platform fees)
+     * @return songIds An array of newly assigned song IDs corresponding to each input
      */
     function registerSong(
-        string calldata title,
-        uint256 principalArtistId,
-        uint256[] calldata artistIDs,
-        string calldata mediaURI,
-        string calldata metadataURI,
-        bool canBePurchased,
-        uint256 netprice
+        StructsLib.RegisterSongInput[] calldata inputs
     )
         external
         checkContentRegistrationBreaker
-        senderIsUserId(principalArtistId)
-        returns (uint256)
+        returns (uint256[] memory songIds)
     {
-        if (artistIDs.length > 0) {
-            for (uint256 i = 0; i < artistIDs.length; i++) {
-                if (!userDB.exists(artistIDs[i]))
-                    revert ErrorsLib.UserIdDoesNotExist(artistIDs[i]);
-            }
-        }
+        uint256 length = inputs.length;
 
-        if (bytes(title).length == 0) revert ErrorsLib.TitleCannotBeEmpty();
+        if (length == 0) revert ErrorsLib.DataIsEmpty();
 
-        return
-            songDB.register(
-                title,
-                principalArtistId,
-                artistIDs,
-                mediaURI,
-                metadataURI,
-                canBePurchased,
-                netprice
-            );
-    }
+        songIds = new uint256[](length);
 
-    /**
-     * @notice Registers multiple songs in a single transaction
-     * @dev Validates all featured artists exist and titles are not empty. Only the principal artist can register.
-     *      Returns an array of newly assigned song IDs corresponding to the input arrays.
-     * @param title Array of song titles
-     * @param principalArtistId The main artist ID (must be the sender)
-     * @param artistIDs Array of arrays of featured artist IDs for each song
-     * @param mediaURI Array of URIs pointing to each song's audio/media
-     * @param metadataURI Array of URIs pointing to each song's metadata
-     * @param canBePurchased Array of booleans indicating purchasability for each song
-     * @param netprice Array of net artist prices for each song (before platform fees)
-     * @return An array of newly assigned song IDs for the registered songs
-     */
-    function registerSongOnBatch(
-        string[] calldata title,
-        uint256 principalArtistId,
-        uint256[][] calldata artistIDs,
-        string[] calldata mediaURI,
-        string[] calldata metadataURI,
-        bool[] calldata canBePurchased,
-        uint256[] calldata netprice
-    )
-        external
-        checkContentRegistrationBreaker
-        senderIsUserId(principalArtistId)
-        returns (uint256[] memory)
-    {
-        uint256 length = title.length;
+        address sender = msg.sender;
 
-        uint256[] memory songIds = new uint256[](length);
+        for (uint256 i = 0; i < length; ) {
+            if (userDB.getAddress(inputs[i].principalArtistId) != sender)
+                revert ErrorsLib.AddressIsNotOwnerOfUserId();
 
-        for (uint256 i = 0; i < length; i++) {
-            for (uint256 j = 0; j < artistIDs[i].length; j++) {
-                if (!userDB.exists(artistIDs[i][j]))
-                    revert ErrorsLib.UserIdDoesNotExist(artistIDs[i][j]);
-            }
-
-            if (bytes(title[i]).length == 0)
+            if (bytes(inputs[i].title).length == 0)
                 revert ErrorsLib.TitleCannotBeEmpty();
 
-            songIds[i] = songDB.register(
-                title[i],
-                principalArtistId,
-                artistIDs[i],
-                mediaURI[i],
-                metadataURI[i],
-                canBePurchased[i],
-                netprice[i]
-            );
-        }
+            uint256[] calldata featuredArtists = inputs[i].artistIDs;
+            
+            if (featuredArtists.length > 0) {
+                for (uint256 j = 0; j < featuredArtists.length; ) {
+                    if (!userDB.exists(featuredArtists[j]))
+                        revert ErrorsLib.UserIdDoesNotExist(
+                            featuredArtists[j]
+                        );
 
-        return songIds;
+                    unchecked {
+                        j++;
+                    }
+                }
+            }
+
+            songIds[i] = songDB.register(
+                inputs[i].title,
+                inputs[i].principalArtistId,
+                inputs[i].artistIDs,
+                inputs[i].mediaURI,
+                inputs[i].metadataURI,
+                inputs[i].canBePurchased,
+                inputs[i].netprice
+            );
+
+            unchecked {
+                i++;
+            }
+        }
     }
 
     /**
