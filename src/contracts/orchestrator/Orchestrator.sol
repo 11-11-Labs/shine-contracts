@@ -511,66 +511,97 @@ contract Orchestrator is Ownable {
     //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 Album Management 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋
 
     /**
-     * @notice Registers a new album to the platform
-     * @dev Only the principal artist can register albums. All songs must belong to the same principal artist.
-     *      For special editions, maxSupplySpecialEdition and specialEditionName must be provided.
-     * @param title Display name of the album
-     * @param principalArtistId The main artist ID (must be the sender)
-     * @param metadataURI URI pointing to album metadata (e.g., IPFS)
-     * @param songIDs Array of song IDs to include in the album
-     * @param price The net album price (before platform fees)
-     * @param canBePurchased Whether the album is available for purchase
-     * @param isASpecialEdition Whether this is a limited edition release
-     * @param specialEditionName Name/label for the special edition
-     * @param maxSupplySpecialEdition Maximum copies available (0 if not special edition)
-     * @return The newly assigned album ID
+     * @notice Registers one or more albums in a single transaction
+     * @dev Batch version of registerAlbum. Validates all inputs for each album. Reverts if any album data is invalid.
+     *      Split metadata can be provided during registration, so album revenue splits are configured at creation.
+     * @param inputs An array of RegisterAlbumInput structs containing album registration data for each album
+     *               the inputs are composed of
+     *               - title: Display name of the album
+     *               - principalArtistId: The main artist ID (must be the sender)
+     *               - metadataURI: URI pointing to album metadata (e.g., IPFS)
+     *               - songIDs: Array of song IDs to include in the album
+     *               - price: The net album price (before platform fees)
+     *               - canBePurchased: Whether the album is available for purchase
+     *               - isASpecialEdition: Whether this is a limited edition release
+     *               - specialEditionName: Name/label for the special edition
+     *               - maxSupplySpecialEdition: Maximum copies available (0 if not special edition)
+     *               - splitMetadata: Array of SplitterDB.Metadata structs defining revenue splits for the album
+     * @return albumID An array of newly assigned album IDs corresponding to each input
      */
     function registerAlbum(
-        string calldata title,
-        uint256 principalArtistId,
-        string calldata metadataURI,
-        uint256[] calldata songIDs,
-        uint256 price,
-        bool canBePurchased,
-        bool isASpecialEdition,
-        string calldata specialEditionName,
-        uint256 maxSupplySpecialEdition
-    )
-        external
-        checkContentRegistrationBreaker
-        senderIsUserId(principalArtistId)
-        returns (uint256)
-    {
-        if (bytes(title).length == 0) revert ErrorsLib.TitleCannotBeEmpty();
+        StructsLib.RegisterAlbumInput[] calldata inputs
+    ) external checkContentRegistrationBreaker returns (uint256[] memory albumID) {
+        uint256 length = inputs.length;
+        
+        if (length == 0) revert ErrorsLib.DataIsEmpty();
 
-        if (isASpecialEdition) {
-            if (maxSupplySpecialEdition == 0)
-                revert ErrorsLib.MaxSupplyMustBeGreaterThanZero();
+        albumID = new uint256[](length);
 
-            if (bytes(specialEditionName).length == 0)
-                revert ErrorsLib.SpecialEditionNameCannotBeEmpty();
-        }
+        for (uint256 i = 0; i < length; ) {
+            if (userDB.getAddress(inputs[i].principalArtistId) != msg.sender)
+                revert ErrorsLib.AddressIsNotOwnerOfUserId();
 
-        for (uint256 i = 0; i < songIDs.length; i++) {
-            if (!songDB.exists(songIDs[i]))
-                revert ErrorsLib.SongIdDoesNotExist(songIDs[i]);
+            if (bytes(inputs[i].title).length == 0)
+                revert ErrorsLib.TitleCannotBeEmpty();
 
-            if (songDB.getPrincipalArtistId(songIDs[i]) != principalArtistId)
-                revert ErrorsLib.ListCannotContainSongsFromDifferentPrincipalArtist();
-        }
+            if (
+                inputs[i].isASpecialEdition &&
+                inputs[i].maxSupplySpecialEdition == 0
+            ) revert ErrorsLib.MaxSupplyMustBeGreaterThanZero();
 
-        return
-            albumDB.register(
-                title,
-                principalArtistId,
-                metadataURI,
-                songIDs,
-                price,
-                canBePurchased,
-                isASpecialEdition,
-                specialEditionName,
-                maxSupplySpecialEdition
+            if (
+                inputs[i].isASpecialEdition &&
+                bytes(inputs[i].specialEditionName).length == 0
+            ) revert ErrorsLib.SpecialEditionNameCannotBeEmpty();
+
+            uint256[] calldata songIDs = inputs[i].songIDs;
+
+            for (uint256 j = 0; j < songIDs.length; ) {
+                if (!songDB.exists(songIDs[j]))
+                    revert ErrorsLib.SongIdDoesNotExist(songIDs[j]);
+
+                if (
+                    songDB.getPrincipalArtistId(songIDs[j]) !=
+                    inputs[i].principalArtistId
+                )
+                    revert ErrorsLib.ListCannotContainSongsFromDifferentPrincipalArtist();
+
+                unchecked {
+                    j++;
+                }
+            }
+
+            albumID[i] = albumDB.register(
+                inputs[i].title,
+                inputs[i].principalArtistId,
+                inputs[i].metadataURI,
+                inputs[i].songIDs,
+                inputs[i].price,
+                inputs[i].canBePurchased,
+                inputs[i].isASpecialEdition,
+                inputs[i].specialEditionName,
+                inputs[i].maxSupplySpecialEdition
             );
+
+             if (inputs[i].splitMetadata.length > 0) {
+                for (uint256 j = 0; j < inputs[i].splitMetadata.length; ) {
+                    if (!userDB.exists(inputs[i].splitMetadata[j].id))
+                        revert ErrorsLib.UserIdDoesNotExist(
+                            inputs[i].splitMetadata[j].id
+                        );
+
+                    unchecked {
+                        j++;
+                    }
+                }
+
+                splitterDB.set(true, albumID[i], inputs[i].splitMetadata);
+            }
+
+            unchecked {
+                i++;
+            }
+        }
     }
 
     /**

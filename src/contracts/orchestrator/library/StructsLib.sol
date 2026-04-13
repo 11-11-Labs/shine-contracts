@@ -77,4 +77,17 @@ library StructsLib {
         uint256 netprice;
         SplitterDB.Metadata[] splitMetadata;
     }
+
+    struct RegisterAlbumInput {
+        string title;
+        uint256 principalArtistId;
+        string metadataURI;
+        uint256[] songIDs;
+        uint256 price;
+        bool canBePurchased;
+        bool isASpecialEdition;
+        string specialEditionName;
+        uint256 maxSupplySpecialEdition;
+        SplitterDB.Metadata[] splitMetadata;
+    }
 }
