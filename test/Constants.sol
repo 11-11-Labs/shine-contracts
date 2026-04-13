@@ -8,6 +8,7 @@ import {SongDB} from "@shine/contracts/database/SongDB.sol";
 import {UserDB} from "@shine/contracts/database/UserDB.sol";
 import {Orchestrator} from "@shine/contracts/orchestrator/Orchestrator.sol";
 import {SplitterDB} from "@shine/contracts/database/SplitterDB.sol";
+import {StructsLib} from "@shine/contracts/orchestrator/library/StructsLib.sol";
 
 abstract contract Constants is Test {
     ///@dev this are the contract instances used in separate tests
@@ -166,18 +167,20 @@ abstract contract Constants is Test {
         bool canBePurchased,
         uint256 netprice
     ) internal virtual returns (uint256) {
+        StructsLib.RegisterSongInput[] memory inputs = new StructsLib.RegisterSongInput[](1);
+        inputs[0] = StructsLib.RegisterSongInput({
+            title: title,
+            principalArtistId: principalUserId,
+            artistIDs: featuredUserIds,
+            mediaURI: mediaURI,
+            metadataURI: metadataURI,
+            canBePurchased: canBePurchased,
+            netprice: netprice
+        });
         vm.startPrank(principalArtistAddress);
-        uint256 songId = orchestrator.registerSong(
-            title,
-            principalUserId,
-            featuredUserIds,
-            mediaURI,
-            metadataURI,
-            canBePurchased,
-            netprice
-        );
+        uint256[] memory songIds = orchestrator.registerSong(inputs);
         vm.stopPrank();
-        return songId;
+        return songIds[0];
     }
 
     function _assign_song_to_album_direct(uint256 songId, uint256 albumId) internal virtual {
