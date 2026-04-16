@@ -351,20 +351,8 @@ contract Orchestrator is Ownable {
                 inputs[i].netprice
             );
 
-            if (inputs[i].splitMetadata.length > 0) {
-                for (uint256 j = 0; j < inputs[i].splitMetadata.length; ) {
-                    if (!userDB.exists(inputs[i].splitMetadata[j].id))
-                        revert ErrorsLib.UserIdDoesNotExist(
-                            inputs[i].splitMetadata[j].id
-                        );
-
-                    unchecked {
-                        j++;
-                    }
-                }
-
-                splitterDB.set(false, songIds[i], inputs[i].splitMetadata);
-            }
+            if (inputs[i].splitMetadata.length > 0)
+                _setSplit(false, songIds[i], inputs[i].splitMetadata);
 
             unchecked {
                 i++;
@@ -431,16 +419,7 @@ contract Orchestrator is Ownable {
         senderIsUserId(songDB.getPrincipalArtistId(songId))
         songIdExists(songId)
     {
-        for (uint256 i = 0; i < splitMetadata.length; ) {
-            if (!userDB.exists(splitMetadata[i].id))
-                revert ErrorsLib.UserIdDoesNotExist(splitMetadata[i].id);
-
-            unchecked {
-                i++;
-            }
-        }
-
-        splitterDB.set(false, songId, splitMetadata);
+        _setSplit(false, songId, splitMetadata);
     }
 
     /**
@@ -587,20 +566,8 @@ contract Orchestrator is Ownable {
                 inputs[i].maxSupplySpecialEdition
             );
 
-            if (inputs[i].splitMetadata.length > 0) {
-                for (uint256 j = 0; j < inputs[i].splitMetadata.length; ) {
-                    if (!userDB.exists(inputs[i].splitMetadata[j].id))
-                        revert ErrorsLib.UserIdDoesNotExist(
-                            inputs[i].splitMetadata[j].id
-                        );
-
-                    unchecked {
-                        j++;
-                    }
-                }
-
-                splitterDB.set(true, albumID[i], inputs[i].splitMetadata);
-            }
+            if (inputs[i].splitMetadata.length > 0)
+                _setSplit(true, albumID[i], inputs[i].splitMetadata);
 
             unchecked {
                 i++;
@@ -667,16 +634,7 @@ contract Orchestrator is Ownable {
         senderIsUserId(albumDB.getPrincipalArtistId(albumId))
         albumIdExists(albumId)
     {
-        for (uint256 i = 0; i < splitMetadata.length; ) {
-            if (!userDB.exists(splitMetadata[i].id))
-                revert ErrorsLib.UserIdDoesNotExist(splitMetadata[i].id);
-
-            unchecked {
-                i++;
-            }
-        }
-
-        splitterDB.set(true, albumId, splitMetadata);
+        _setSplit(true, albumId, splitMetadata);
     }
 
     /**
@@ -1055,6 +1013,29 @@ contract Orchestrator is Ownable {
 
     //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 Internal Functions 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋
 
+    /**
+     * @notice Internal function to set revenue splits for a song or album
+     * @dev Validates that all user IDs in the split metadata exist. Then calls SplitterDB to store the split configuration.
+     * @param isAlbum True if setting splits for an album, false for a song
+     * @param id The ID of the album or song to set splits for
+     * @param splitMetadata Array of SplitterDB.Metadata structs defining the revenue splits
+     */
+    function _setSplit(
+        bool isAlbum,
+        uint256 id,
+        SplitterDB.Metadata[] calldata splitMetadata
+    ) internal {
+        for (uint256 i = 0; i < splitMetadata.length; ) {
+            if (!userDB.exists(splitMetadata[i].id))
+                revert ErrorsLib.UserIdDoesNotExist(splitMetadata[i].id);
+
+            unchecked {
+                i++;
+            }
+        }
+
+        splitterDB.set(isAlbum, id, splitMetadata);
+    }
     /**
      * @notice Internal function that processes payments for song/album purchases
      * @dev Handles deduction from user balance, revenue split distribution, fee collection, and extra amounts (tips).
