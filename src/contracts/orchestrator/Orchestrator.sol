@@ -837,23 +837,6 @@ contract Orchestrator is Ownable {
     }
 
     /**
-     * @notice Distributes collected platform fees to an artist's account balance
-     * @dev Only the owner can distribute fees
-     * @param artistId The artist ID to receive the fees
-     * @param amount Amount of fees to distribute
-     */
-    function giveCollectedFeesToArtist(
-        uint256 artistId,
-        uint256 amount
-    ) external onlyOwner userIdExists(artistId) {
-        if (amountCollectedInFees < amount)
-            revert ErrorsLib.InsufficientBalance();
-
-        amountCollectedInFees -= amount;
-        userDB.addBalance(artistId, amount);
-    }
-
-    /**
      * @notice Distributes collected platform fees to a user's account balance
      * @dev Only the owner can distribute fees
      * @param userId The user ID to receive the fees
