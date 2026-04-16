@@ -659,7 +659,7 @@ contract Orchestrator is Ownable {
      * @param albumId The album ID to set splits for
      * @param splitMetadata Array of SplitterDB.Metadata structs defining the revenue splits
      */
-    function setSplitOfAlbum(
+    function changeSplitOfAlbum(
         uint256 albumId,
         SplitterDB.Metadata[] calldata splitMetadata
     )
