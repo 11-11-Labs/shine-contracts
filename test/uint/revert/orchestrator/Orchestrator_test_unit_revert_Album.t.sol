@@ -67,18 +67,24 @@ contract Orchestrator_test_unit_revert_Album is Constants {
 
     function test_unit_revert_registerAlbum__TitleCannotBeEmpty() public {
         vm.startPrank(ARTIST_1.Address);
+
+        StructsLib.RegisterAlbumInput[]
+            memory inputs = new StructsLib.RegisterAlbumInput[](1);
+        inputs[0] = StructsLib.RegisterAlbumInput({
+            title: "",
+            principalArtistId: ARTIST_ID,
+            metadataURI: "https://arweave.net/initialAlbumMetadataURI",
+            songIDs: songIDs,
+            price: 1500,
+            canBePurchased: true,
+            isASpecialEdition: true,
+            specialEditionName: "Special Ultra Turbo Deluxe Edition Remaster Battle Royale with Banjo-Kazooie & Nnuckles NEW Funky Mode (Featuring Dante from Devil May Cry Series)",
+            maxSupplySpecialEdition: 1000,
+            splitMetadata: new SplitterDB.Metadata[](0)
+        });
+
         vm.expectRevert(ErrorsLib.TitleCannotBeEmpty.selector);
-        uint256 albumID = orchestrator.registerAlbum(
-            "",
-            ARTIST_ID,
-            "https://arweave.net/initialAlbumMetadataURI",
-            songIDs,
-            1500,
-            true,
-            true,
-            "Special Ultra Turbo Deluxe Edition Remaster Battle Royale with Banjo-Kazooie & Nnuckles NEW Funky Mode (Featuring Dante from Devil May Cry Series)",
-            1000
-        );
+        uint256[] memory albumID = orchestrator.registerAlbum(inputs);
         vm.stopPrank();
     }
 
@@ -86,18 +92,24 @@ contract Orchestrator_test_unit_revert_Album is Constants {
         public
     {
         vm.startPrank(ARTIST_2.Address);
+
+        StructsLib.RegisterAlbumInput[]
+            memory inputs = new StructsLib.RegisterAlbumInput[](1);
+        inputs[0] = StructsLib.RegisterAlbumInput({
+            title: "Initial Album",
+            principalArtistId: ARTIST_ID,
+            metadataURI: "https://arweave.net/initialAlbumMetadataURI",
+            songIDs: songIDs,
+            price: 1500,
+            canBePurchased: true,
+            isASpecialEdition: true,
+            specialEditionName: "Special Ultra Turbo Deluxe Edition Remaster Battle Royale with Banjo-Kazooie & Nnuckles NEW Funky Mode (Featuring Dante from Devil May Cry Series)",
+            maxSupplySpecialEdition: 1000,
+            splitMetadata: new SplitterDB.Metadata[](0)
+        });
+
         vm.expectRevert(ErrorsLib.AddressIsNotOwnerOfUserId.selector);
-        uint256 albumID = orchestrator.registerAlbum(
-            "Initial Album",
-            ARTIST_ID,
-            "https://arweave.net/initialAlbumMetadataURI",
-            songIDs,
-            1500,
-            true,
-            true,
-            "Special Ultra Turbo Deluxe Edition Remaster Battle Royale with Banjo-Kazooie & Nnuckles NEW Funky Mode (Featuring Dante from Devil May Cry Series)",
-            1000
-        );
+        uint256[] memory albumID = orchestrator.registerAlbum(inputs);
         vm.stopPrank();
     }
 
@@ -106,17 +118,21 @@ contract Orchestrator_test_unit_revert_Album is Constants {
     {
         vm.startPrank(ARTIST_1.Address);
         vm.expectRevert(ErrorsLib.MaxSupplyMustBeGreaterThanZero.selector);
-        uint256 albumID = orchestrator.registerAlbum(
-            "Initial Album",
-            ARTIST_ID,
-            "https://arweave.net/initialAlbumMetadataURI",
-            songIDs,
-            1500,
-            true,
-            true,
-            "Special Ultra Turbo Deluxe Edition Remaster Battle Royale with Banjo-Kazooie & Nnuckles NEW Funky Mode (Featuring Dante from Devil May Cry Series)",
-            0
-        );
+        StructsLib.RegisterAlbumInput[]
+            memory inputs = new StructsLib.RegisterAlbumInput[](1);
+        inputs[0] = StructsLib.RegisterAlbumInput({
+            title: "Initial Album",
+            principalArtistId: ARTIST_ID,
+            metadataURI: "https://arweave.net/initialAlbumMetadataURI",
+            songIDs: songIDs,
+            price: 1500,
+            canBePurchased: true,
+            isASpecialEdition: true,
+            specialEditionName: "Special Ultra Turbo Deluxe Edition Remaster Battle Royale with Banjo-Kazooie & Nnuckles NEW Funky Mode (Featuring Dante from Devil May Cry Series)",
+            maxSupplySpecialEdition: 0,
+            splitMetadata: new SplitterDB.Metadata[](0)
+        });
+        uint256[] memory albumID = orchestrator.registerAlbum(inputs);
         vm.stopPrank();
     }
 
@@ -124,18 +140,23 @@ contract Orchestrator_test_unit_revert_Album is Constants {
         public
     {
         vm.startPrank(ARTIST_1.Address);
+        StructsLib.RegisterAlbumInput[]
+            memory inputs = new StructsLib.RegisterAlbumInput[](1);
+        inputs[0] = StructsLib.RegisterAlbumInput({
+            title: "Initial Album",
+            principalArtistId: ARTIST_ID,
+            metadataURI: "https://arweave.net/initialAlbumMetadataURI",
+            songIDs: songIDs,
+            price: 1500,
+            canBePurchased: true,
+            isASpecialEdition: true,
+            specialEditionName: "",
+            maxSupplySpecialEdition: 1000,
+            splitMetadata: new SplitterDB.Metadata[](0)
+        });
+
         vm.expectRevert(ErrorsLib.SpecialEditionNameCannotBeEmpty.selector);
-        uint256 albumID = orchestrator.registerAlbum(
-            "Initial Album",
-            ARTIST_ID,
-            "https://arweave.net/initialAlbumMetadataURI",
-            songIDs,
-            1500,
-            true,
-            true,
-            "",
-            1000
-        );
+        uint256[] memory albumID = orchestrator.registerAlbum(inputs);
         vm.stopPrank();
     }
 
@@ -143,20 +164,27 @@ contract Orchestrator_test_unit_revert_Album is Constants {
         vm.startPrank(ARTIST_1.Address);
         uint256[] memory invalidSongIDs = new uint256[](1);
         invalidSongIDs[0] = 9999; // Assuming this song ID does not exist
+
+        StructsLib.RegisterAlbumInput[]
+            memory inputs = new StructsLib.RegisterAlbumInput[](1);
+        inputs[0] = StructsLib.RegisterAlbumInput({
+            title: "Initial Album",
+            principalArtistId: ARTIST_ID,
+            metadataURI: "https://arweave.net/initialAlbumMetadataURI",
+            songIDs: invalidSongIDs,
+            price: 1500,
+            canBePurchased: true,
+            isASpecialEdition: true,
+            specialEditionName: "Special Ultra Turbo Deluxe Edition Remaster Battle Royale with Banjo-Kazooie & Nnuckles NEW Funky Mode (Featuring Dante from Devil May Cry Series)",
+            maxSupplySpecialEdition: 1000,
+            splitMetadata: new SplitterDB.Metadata[](0)
+        });
+
         vm.expectRevert(
             abi.encodeWithSelector(ErrorsLib.SongIdDoesNotExist.selector, 9999)
         );
-        uint256 albumID = orchestrator.registerAlbum(
-            "Initial Album",
-            ARTIST_ID,
-            "https://arweave.net/initialAlbumMetadataURI",
-            invalidSongIDs,
-            1500,
-            true,
-            true,
-            "Special Ultra Turbo Deluxe Edition Remaster Battle Royale with Banjo-Kazooie & Nnuckles NEW Funky Mode (Featuring Dante from Devil May Cry Series)",
-            1000
-        );
+        uint256[] memory albumID = orchestrator.registerAlbum(inputs);
+
         vm.stopPrank();
     }
 
@@ -176,23 +204,28 @@ contract Orchestrator_test_unit_revert_Album is Constants {
         );
         vm.startPrank(ARTIST_1.Address);
 
+        StructsLib.RegisterAlbumInput[]
+            memory inputs = new StructsLib.RegisterAlbumInput[](1);
+        inputs[0] = StructsLib.RegisterAlbumInput({
+            title: "Initial Album",
+            principalArtistId: ARTIST_ID,
+            metadataURI: "https://arweave.net/initialAlbumMetadataURI",
+            songIDs: invalidSongIDs,
+            price: 1500,
+            canBePurchased: true,
+            isASpecialEdition: true,
+            specialEditionName: "Special Ultra Turbo Deluxe Edition Remaster Battle Royale with Banjo-Kazooie & Nnuckles NEW Funky Mode (Featuring Dante from Devil May Cry Series)",
+            maxSupplySpecialEdition: 1000,
+            splitMetadata: new SplitterDB.Metadata[](0)
+        });
+
         vm.expectRevert(
             ErrorsLib
                 .ListCannotContainSongsFromDifferentPrincipalArtist
                 .selector
         );
 
-        uint256 albumID = orchestrator.registerAlbum(
-            "Initial Album",
-            ARTIST_ID,
-            "https://arweave.net/initialAlbumMetadataURI",
-            invalidSongIDs,
-            1500,
-            true,
-            true,
-            "Special Ultra Turbo Deluxe Edition Remaster Battle Royale with Banjo-Kazooie & Nnuckles NEW Funky Mode (Featuring Dante from Devil May Cry Series)",
-            1000
-        );
+        uint256[] memory albumID = orchestrator.registerAlbum(inputs);
         vm.stopPrank();
     }
 
@@ -200,25 +233,30 @@ contract Orchestrator_test_unit_revert_Album is Constants {
         public
     {
         vm.startPrank(ARTIST_1.Address);
-        uint256 albumID = orchestrator.registerAlbum(
-            "Initial Album",
-            ARTIST_ID,
-            "https://arweave.net/initialAlbumMetadataURI",
-            songIDs,
-            1500,
-            true,
-            true,
-            "Special Ultra Turbo Deluxe Edition Remaster Battle Royale with Banjo-Kazooie & Nnuckles NEW Funky Mode (Featuring Dante from Devil May Cry Series)",
-            1000
-        );
+        StructsLib.RegisterAlbumInput[]
+            memory inputs = new StructsLib.RegisterAlbumInput[](1);
+        inputs[0] = StructsLib.RegisterAlbumInput({
+            title: "Initial Album",
+            principalArtistId: ARTIST_ID,
+            metadataURI: "https://arweave.net/initialAlbumMetadataURI",
+            songIDs: songIDs,
+            price: 1500,
+            canBePurchased: true,
+            isASpecialEdition: true,
+            specialEditionName: "Special Ultra Turbo Deluxe Edition Remaster Battle Royale with Banjo-Kazooie & Nnuckles NEW Funky Mode (Featuring Dante from Devil May Cry Series)",
+            maxSupplySpecialEdition: 1000,
+            splitMetadata: new SplitterDB.Metadata[](0)
+        });
+
+        uint256[] memory albumID = orchestrator.registerAlbum(inputs);
 
         // Gift to USER_ID so TimesBought becomes 1
-        orchestrator.giftAlbum(albumID, USER_ID);
+        orchestrator.giftAlbum(albumID[0], USER_ID);
 
         // maxSupplySpecialEdition = 1 <= TimesBought (1), so it should revert
         vm.expectRevert(ErrorsLib.MustBeGreaterThanCurrent.selector);
         orchestrator.changeAlbumFullData(
-            albumID,
+            albumID[0],
             "Updated Album Title",
             ARTIST_ID,
             "https://arweave.net/updatedAlbumMetadataURI",
@@ -235,22 +273,27 @@ contract Orchestrator_test_unit_revert_Album is Constants {
         public
     {
         vm.startPrank(ARTIST_1.Address);
-        uint256 albumID = orchestrator.registerAlbum(
-            "Initial Album",
-            ARTIST_ID,
-            "https://arweave.net/initialAlbumMetadataURI",
-            songIDs,
-            1500,
-            true,
-            true,
-            "Special Ultra Turbo Deluxe Edition Remaster Battle Royale with Banjo-Kazooie & Nnuckles NEW Funky Mode (Featuring Dante from Devil May Cry Series)",
-            1000
-        );
+        StructsLib.RegisterAlbumInput[]
+            memory inputs = new StructsLib.RegisterAlbumInput[](1);
+        inputs[0] = StructsLib.RegisterAlbumInput({
+            title: "Initial Album",
+            principalArtistId: ARTIST_ID,
+            metadataURI: "https://arweave.net/initialAlbumMetadataURI",
+            songIDs: songIDs,
+            price: 1500,
+            canBePurchased: true,
+            isASpecialEdition: true,
+            specialEditionName: "Special Ultra Turbo Deluxe Edition Remaster Battle Royale with Banjo-Kazooie & Nnuckles NEW Funky Mode (Featuring Dante from Devil May Cry Series)",
+            maxSupplySpecialEdition: 1000,
+            splitMetadata: new SplitterDB.Metadata[](0)
+        });
+
+        uint256[] memory albumID = orchestrator.registerAlbum(inputs);
         vm.stopPrank();
         vm.startPrank(ARTIST_2.Address);
         vm.expectRevert(ErrorsLib.AddressIsNotOwnerOfUserId.selector);
         orchestrator.changeAlbumFullData(
-            albumID,
+            albumID[0],
             "Updated Album Title",
             ARTIST_ID,
             "https://arweave.net/updatedAlbumMetadataURI",
@@ -267,21 +310,26 @@ contract Orchestrator_test_unit_revert_Album is Constants {
         public
     {
         vm.startPrank(ARTIST_1.Address);
-        uint256 albumID = orchestrator.registerAlbum(
-            "Initial Album",
-            ARTIST_ID,
-            "https://arweave.net/initialAlbumMetadataURI",
-            songIDs,
-            1500,
-            true,
-            true,
-            "Special Ultra Turbo Deluxe Edition Remaster Battle Royale with Banjo-Kazooie & Nnuckles NEW Funky Mode (Featuring Dante from Devil May Cry Series)",
-            1000
-        );
+        StructsLib.RegisterAlbumInput[]
+            memory inputs = new StructsLib.RegisterAlbumInput[](1);
+        inputs[0] = StructsLib.RegisterAlbumInput({
+            title: "Initial Album",
+            principalArtistId: ARTIST_ID,
+            metadataURI: "https://arweave.net/initialAlbumMetadataURI",
+            songIDs: songIDs,
+            price: 1500,
+            canBePurchased: true,
+            isASpecialEdition: true,
+            specialEditionName: "Special Ultra Turbo Deluxe Edition Remaster Battle Royale with Banjo-Kazooie & Nnuckles NEW Funky Mode (Featuring Dante from Devil May Cry Series)",
+            maxSupplySpecialEdition: 1000,
+            splitMetadata: new SplitterDB.Metadata[](0)
+        });
+
+        uint256[] memory albumID = orchestrator.registerAlbum(inputs);
         vm.stopPrank();
         vm.startPrank(ARTIST_2.Address);
         vm.expectRevert(ErrorsLib.AddressIsNotOwnerOfUserId.selector);
-        orchestrator.changeAlbumPurchaseability(albumID, false);
+        orchestrator.changeAlbumPurchaseability(albumID[0], false);
         vm.stopPrank();
     }
 
@@ -289,21 +337,26 @@ contract Orchestrator_test_unit_revert_Album is Constants {
         public
     {
         vm.startPrank(ARTIST_1.Address);
-        uint256 albumID = orchestrator.registerAlbum(
-            "Initial Album",
-            ARTIST_ID,
-            "https://arweave.net/initialAlbumMetadataURI",
-            songIDs,
-            1500,
-            true,
-            true,
-            "Special Ultra Turbo Deluxe Edition Remaster Battle Royale with Banjo-Kazooie & Nnuckles NEW Funky Mode (Featuring Dante from Devil May Cry Series)",
-            1000
-        );
+        StructsLib.RegisterAlbumInput[]
+            memory inputs = new StructsLib.RegisterAlbumInput[](1);
+        inputs[0] = StructsLib.RegisterAlbumInput({
+            title: "Initial Album",
+            principalArtistId: ARTIST_ID,
+            metadataURI: "https://arweave.net/initialAlbumMetadataURI",
+            songIDs: songIDs,
+            price: 1500,
+            canBePurchased: true,
+            isASpecialEdition: true,
+            specialEditionName: "Special Ultra Turbo Deluxe Edition Remaster Battle Royale with Banjo-Kazooie & Nnuckles NEW Funky Mode (Featuring Dante from Devil May Cry Series)",
+            maxSupplySpecialEdition: 1000,
+            splitMetadata: new SplitterDB.Metadata[](0)
+        });
+
+        uint256[] memory albumID = orchestrator.registerAlbum(inputs);
         vm.stopPrank();
         vm.startPrank(ARTIST_2.Address);
         vm.expectRevert(ErrorsLib.AddressIsNotOwnerOfUserId.selector);
-        orchestrator.changeAlbumPrice(albumID, 2500);
+        orchestrator.changeAlbumPrice(albumID[0], 2500);
         vm.stopPrank();
     }
 
@@ -311,22 +364,27 @@ contract Orchestrator_test_unit_revert_Album is Constants {
         public
     {
         vm.startPrank(ARTIST_1.Address);
-        uint256 albumID = orchestrator.registerAlbum(
-            "Initial Album",
-            ARTIST_ID,
-            "https://arweave.net/initialAlbumMetadataURI",
-            songIDs,
-            1500,
-            true,
-            true,
-            "Special Ultra Turbo Deluxe Edition Remaster Battle Royale with Banjo-Kazooie & Nnuckles NEW Funky Mode (Featuring Dante from Devil May Cry Series)",
-            1000
-        );
+        StructsLib.RegisterAlbumInput[]
+            memory inputs = new StructsLib.RegisterAlbumInput[](1);
+        inputs[0] = StructsLib.RegisterAlbumInput({
+            title: "Initial Album",
+            principalArtistId: ARTIST_ID,
+            metadataURI: "https://arweave.net/initialAlbumMetadataURI",
+            songIDs: songIDs,
+            price: 1500,
+            canBePurchased: true,
+            isASpecialEdition: true,
+            specialEditionName: "Special Ultra Turbo Deluxe Edition Remaster Battle Royale with Banjo-Kazooie & Nnuckles NEW Funky Mode (Featuring Dante from Devil May Cry Series)",
+            maxSupplySpecialEdition: 1000,
+            splitMetadata: new SplitterDB.Metadata[](0)
+        });
+
+        uint256[] memory albumID = orchestrator.registerAlbum(inputs);
         vm.stopPrank();
 
         vm.startPrank(USER.Address);
         vm.expectRevert(ErrorsLib.InsufficientBalance.selector);
-        orchestrator.purchaseAlbum(albumID, 0);
+        orchestrator.purchaseAlbum(albumID[0], 0);
         vm.stopPrank();
     }
 
@@ -334,44 +392,54 @@ contract Orchestrator_test_unit_revert_Album is Constants {
         public
     {
         vm.startPrank(ARTIST_1.Address);
-        uint256 albumID = orchestrator.registerAlbum(
-            "Initial Album",
-            ARTIST_ID,
-            "https://arweave.net/initialAlbumMetadataURI",
-            songIDs,
-            1500,
-            true,
-            true,
-            "Special Ultra Turbo Deluxe Edition Remaster Battle Royale with Banjo-Kazooie & Nnuckles NEW Funky Mode (Featuring Dante from Devil May Cry Series)",
-            1000
-        );
+        StructsLib.RegisterAlbumInput[]
+            memory inputs = new StructsLib.RegisterAlbumInput[](1);
+        inputs[0] = StructsLib.RegisterAlbumInput({
+            title: "Initial Album",
+            principalArtistId: ARTIST_ID,
+            metadataURI: "https://arweave.net/initialAlbumMetadataURI",
+            songIDs: songIDs,
+            price: 1500,
+            canBePurchased: true,
+            isASpecialEdition: true,
+            specialEditionName: "Special Ultra Turbo Deluxe Edition Remaster Battle Royale with Banjo-Kazooie & Nnuckles NEW Funky Mode (Featuring Dante from Devil May Cry Series)",
+            maxSupplySpecialEdition: 1000,
+            splitMetadata: new SplitterDB.Metadata[](0)
+        });
+
+        uint256[] memory albumID = orchestrator.registerAlbum(inputs);
         vm.stopPrank();
 
         uint256 extraAmount = 500;
 
         vm.startPrank(USER.Address);
         vm.expectRevert(ErrorsLib.InsufficientBalance.selector);
-        orchestrator.purchaseAlbum(albumID, extraAmount);
+        orchestrator.purchaseAlbum(albumID[0], extraAmount);
         vm.stopPrank();
     }
 
     function test_unit_revert_giftAlbum__AddressIsNotOwnerOfUserId() public {
         vm.startPrank(ARTIST_1.Address);
-        uint256 albumID = orchestrator.registerAlbum(
-            "Initial Album",
-            ARTIST_ID,
-            "https://arweave.net/initialAlbumMetadataURI",
-            songIDs,
-            1500,
-            true,
-            true,
-            "Special Ultra Turbo Deluxe Edition Remaster Battle Royale with Banjo-Kazooie & Nnuckles NEW Funky Mode (Featuring Dante from Devil May Cry Series)",
-            1000
-        );
+        StructsLib.RegisterAlbumInput[]
+            memory inputs = new StructsLib.RegisterAlbumInput[](1);
+        inputs[0] = StructsLib.RegisterAlbumInput({
+            title: "Initial Album",
+            principalArtistId: ARTIST_ID,
+            metadataURI: "https://arweave.net/initialAlbumMetadataURI",
+            songIDs: songIDs,
+            price: 1500,
+            canBePurchased: true,
+            isASpecialEdition: true,
+            specialEditionName: "Special Ultra Turbo Deluxe Edition Remaster Battle Royale with Banjo-Kazooie & Nnuckles NEW Funky Mode (Featuring Dante from Devil May Cry Series)",
+            maxSupplySpecialEdition: 1000,
+            splitMetadata: new SplitterDB.Metadata[](0)
+        });
+
+        uint256[] memory albumID = orchestrator.registerAlbum(inputs);
         vm.stopPrank();
         vm.startPrank(ARTIST_2.Address);
         vm.expectRevert(ErrorsLib.AddressIsNotOwnerOfUserId.selector);
-        orchestrator.giftAlbum(albumID, USER_ID);
+        orchestrator.giftAlbum(albumID[0], USER_ID);
         vm.stopPrank();
     }
 }
