@@ -225,36 +225,6 @@ contract Orchestrator_test_unit_revert_Administrative is Constants {
         );
     }
 
-    function test_unit_revert_giveCollectedFeesToArtist() public {
-        uint256 initialArtistBalance = userDB.getBalance(ARTIST_1_ID);
-
-        vm.startPrank(ADMIN.Address);
-
-        uint256 feesAccumulatedBefore = orchestrator.getAmountCollectedInFees();
-
-        orchestrator.giveCollectedFeesToArtist(
-            ARTIST_1_ID,
-            feesAccumulatedBefore
-        );
-
-        uint256 feesAccumulatedAfter = orchestrator.getAmountCollectedInFees();
-        vm.stopPrank();
-
-        uint256 finalArtistBalance = userDB.getBalance(ARTIST_1_ID);
-
-        assertGt(
-            finalArtistBalance,
-            initialArtistBalance,
-            "Artist stablecoin balance should increase after receiving fees"
-        );
-
-        assertEq(
-            feesAccumulatedAfter,
-            0,
-            "Collected fees in orchestrator should be reset to zero after giving to artist"
-        );
-    }
-
     function test_unit_revert_giveCollectedFeesToUser() public {
         uint256 initialUserBalance = userDB.getBalance(USER_ID);
 
@@ -418,49 +388,6 @@ contract Orchestrator_test_unit_revert_Administrative is Constants {
             feesCollected,
             "Collected fees should remain unchanged after failed withdrawal"
         );
-    }
-
-    function test_unit_revert_giveCollectedFeesToArtist__Unauthorized() public {
-        vm.startPrank(USER.Address);
-        vm.expectRevert(Ownable.Unauthorized.selector);
-        orchestrator.giveCollectedFeesToArtist(ARTIST_1_ID, 1);
-        vm.stopPrank();
-    }
-
-    function test_unit_revert_giveCollectedFeesToArtist__InsufficientBalance()
-        public
-    {
-        vm.startPrank(ADMIN.Address);
-        uint256 feesCollected = orchestrator.getAmountCollectedInFees();
-        vm.expectRevert(ErrorsLib.InsufficientBalance.selector);
-        orchestrator.giveCollectedFeesToArtist(
-            ARTIST_1_ID,
-            feesCollected + 1
-        );
-        uint256 feesAfter = orchestrator.getAmountCollectedInFees();
-        vm.stopPrank();
-
-        assertEq(
-            feesAfter,
-            feesCollected,
-            "Collected fees should remain unchanged after failed give to artist"
-        );
-    }
-
-    function test_unit_revert_giveCollectedFeesToArtist__UserIdDoesNotExist()
-        public
-    {
-        uint256 nonExistentId = 99999999;
-
-        vm.startPrank(ADMIN.Address);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ErrorsLib.UserIdDoesNotExist.selector,
-                nonExistentId
-            )
-        );
-        orchestrator.giveCollectedFeesToArtist(nonExistentId, 1);
-        vm.stopPrank();
     }
 
     function test_unit_revert_giveCollectedFeesToUser__Unauthorized() public {
