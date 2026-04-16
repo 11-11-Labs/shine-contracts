@@ -530,9 +530,13 @@ contract Orchestrator is Ownable {
      */
     function registerAlbum(
         StructsLib.RegisterAlbumInput[] calldata inputs
-    ) external checkContentRegistrationBreaker returns (uint256[] memory albumID) {
+    )
+        external
+        checkContentRegistrationBreaker
+        returns (uint256[] memory albumID)
+    {
         uint256 length = inputs.length;
-        
+
         if (length == 0) revert ErrorsLib.DataIsEmpty();
 
         albumID = new uint256[](length);
@@ -583,7 +587,7 @@ contract Orchestrator is Ownable {
                 inputs[i].maxSupplySpecialEdition
             );
 
-             if (inputs[i].splitMetadata.length > 0) {
+            if (inputs[i].splitMetadata.length > 0) {
                 for (uint256 j = 0; j < inputs[i].splitMetadata.length; ) {
                     if (!userDB.exists(inputs[i].splitMetadata[j].id))
                         revert ErrorsLib.UserIdDoesNotExist(
