@@ -15,14 +15,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Orchestrator**: Central business logic hub coordinating all database contracts, enforcing business rules, and handling payments.
   - User & artist registration and profile management.
   - Fund management: deposits, withdrawals, donations.
-  - Song and album purchase flows with automatic revenue split distribution.
-  - Gift and refund support for songs and albums.
+  - Song management: registration, metadata updates, revenue split configuration, purchaseability and price controls, purchases, and gifts.
+  - Album management: registration, metadata updates, revenue split configuration, purchaseability and price controls, purchases, and gifts.
   - Platform fee collection (basis points).
-  - Circuit breaker controls: `shopOperations`, `depositOperations`, `userRegistration`, `contentRegistration`.
-  - Time-locked stablecoin address upgrade mechanism.
-  - Ban/unban moderation for users, songs, and albums.
+  - Operational breaker flags (`shopOperations`, `depositOperations`, `userRegistration`, `contentRegistration`) enforced at runtime via modifiers; initialized to active at deployment.
+  - Time-locked stablecoin address upgrade mechanism (1-day timelock).
+  - Orchestrator migration: `migrateOrchestrator()` transfers ownership of all DB contracts to a new orchestrator address.
+  - Fee distribution: `withdrawCollectedFees()` and `giveCollectedFeesToUser()`.
 - **Orchestrator Libraries**: `ErrorsLib`, `EventsLib`, and `StructsLib` for shared error definitions, events, and data structures.
 - **IdUtils Library**: Unique sequential ID generation utility for all entities.
 - **IERC20 Interface**: Minimal ERC-20 interface for stablecoin interactions.
-- **Deployment script**: `SongDataBase.s.sol` for deploying the full contract suite.
+- **Deployment script**: `Deploy.s.sol` for deploying the full contract suite.
 - **Test suite**: Unit tests (correct behavior and revert cases) and fuzz tests for database and orchestrator contracts.

@@ -55,9 +55,10 @@ key features:
 ├── changeBasicData() - Update profile
 ├── changeAddress() - Transfer account to new address
 ├── addBalance() / deductBalance() - Financial tracking
-├── addAccumulatedRoyalties() - Royalty tracking (artists)
-├── addSong() / deleteSong() - Purchase history
-└── ban/unban - Moderation capabilities
+├── addAccumulatedRoyalties() / deductAccumulatedRoyalties() - Royalty tracking (artists)
+├── addSong() / deleteSong() - Purchase history management
+├── addSongs() / deleteSongs() - Batch purchase history management
+└── setBannedStatus() - Moderation control
 ```
 
 #### **AlbumDB** - Album Management
@@ -128,21 +129,34 @@ key features:
 │   ├── makeDonation() - Direct artist donations
 │   └── withdrawFunds() - Withdraw earnings
 │
-├── Music Transactions
+├── Song Management
 │   ├── registerSong() - Register new songs
-│   ├── registerAlbum() - Register new albums
+│   ├── changeSongFullData() - Update song metadata
+│   ├── changeSplitOfSong() - Update song revenue split
+│   ├── changeSongPurchaseability() - Toggle song availability
+│   ├── changeSongPrice() - Update song price
 │   ├── purchaseSong() - Buy individual songs
+│   └── giftSong() - Gift music to users
+│
+├── Album Management
+│   ├── registerAlbum() - Register new albums
+│   ├── changeAlbumFullData() - Update album metadata
+│   ├── changeSplitOfAlbum() - Update album revenue split
+│   ├── changeAlbumPurchaseability() - Toggle album availability
+│   ├── changeAlbumPrice() - Update album price
 │   ├── purchaseAlbum() - Buy full albums
-│   ├── giftSong() - Gift music to users
-│   ├── giftAlbum() - Gift albums
-│   └── refundSong() / refundAlbum() - Process refunds
+│   └── giftAlbum() - Gift albums
 │
 └── Admin Functions
-    ├── Fee collection
-    ├── Stablecoin management (with timelock)
-    ├── Ban/unban users, songs, albums
-    ├── Circuit breaker controls
-    └── Database address configuration
+    ├── setDatabaseAddresses() - Initialize DB contract addresses (one-time)
+    ├── changePercentageFee() - Update platform fee
+    ├── Stablecoin management (with 1-day timelock)
+    │   ├── proposeStablecoinAddressChange()
+    │   ├── cancelStablecoinAddressChange()
+    │   └── executeStablecoinAddressChange()
+    ├── migrateOrchestrator() - Transfer all DB ownership to new orchestrator
+    ├── withdrawCollectedFees() - Withdraw platform fees to external address
+    └── giveCollectedFeesToUser() - Credit platform fees to a user account
 ```
 
 ## Data Flow Example: Song Purchase
@@ -263,14 +277,14 @@ $ anvil
 
 Deploy locally:
 ```shell
-$ forge script script/SongDataBase.s.sol --rpc-url http://localhost:8545 --broadcast
+$ forge script script/Deploy.s.sol --rpc-url http://localhost:8545 --broadcast
 ```
 
 ### Deployment
 
 Deploy to network:
 ```shell
-$ forge script script/SongDataBase.s.sol:SongDataBaseScript \
+$ forge script script/Deploy.s.sol:DeployScript \
   --rpc-url <your_rpc_url> \
   --private-key <your_private_key> \
   --broadcast
@@ -312,7 +326,7 @@ Shine_contracts/
 │   └── fuzz/                    # Fuzzing tests
 │
 ├── script/
-│   └── SongDataBase.s.sol       # Deployment scripts
+│   └── Deploy.s.sol             # Deployment scripts
 │
 ├── lib/
 │   ├── forge-std/               # Foundry standard library
@@ -327,9 +341,8 @@ Shine_contracts/
 
 ### Orchestrator Initialization
 1. Deploy Orchestrator with initial owner, stablecoin, and fee %
-2. Deploy AlbumDB, SongDB, UserDB, SplitterDB with Orchestrator address
-3. Set database addresses in Orchestrator
-4. Enable breaker flags for operational readiness
+2. Deploy AlbumDB, SongDB, UserDB, SplitterDB with Orchestrator address as owner
+3. Call `setDatabaseAddresses()` on the Orchestrator (one-time operation)
 
 ### Migration Strategy (Future)
 1. Deploy new Orchestrator version with improved logic
