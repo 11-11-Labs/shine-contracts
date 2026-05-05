@@ -867,6 +867,46 @@ contract Orchestrator is Ownable {
         return amountCollectedInFees;
     }
 
+    /**
+     * @notice Sets the operational status of the shop functions (purchases/gifting)
+     * @dev When set to false, all purchase and gifting functions will be paused. Can be used in emergencies.
+     * @param isOperational True to enable shop operations, false to pause
+     */
+    function setShopOperationsBreaker(bool isOperational) external onlyOwner {
+        breaker.shopOperations = isOperational;
+    }
+
+    /**
+     * @notice Sets the operational status of deposit functions
+     * @dev When set to false, all deposit functions will be paused. Can be used in emergencies.
+     * @param isOperational True to enable deposit operations, false to pause
+     */
+    function setDepositOperationsBreaker(
+        bool isOperational
+    ) external onlyOwner {
+        breaker.depositOperations = isOperational;
+    }
+
+    /**
+     * @notice Sets the operational status of user registration
+     * @dev When set to false, new user registrations will be paused. Can be used in emergencies.
+     * @param isOperational True to enable user registration, false to pause
+     */
+    function setUserRegistrationBreaker(bool isOperational) external onlyOwner {
+        breaker.userRegistration = isOperational;
+    }
+
+    /**
+     * @notice Sets the operational status of content registration (songs/albums)
+     * @dev When set to false, new song and album registrations will be paused. Can be used in emergencies.
+     * @param isOperational True to enable content registration, false to pause
+     */
+    function setContentRegistrationBreaker(
+        bool isOperational
+    ) external onlyOwner {
+        breaker.contentRegistration = isOperational;
+    }
+
     //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 Query Functions 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋
 
     /**
