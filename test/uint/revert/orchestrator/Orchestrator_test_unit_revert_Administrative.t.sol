@@ -429,4 +429,162 @@ contract Orchestrator_test_unit_revert_Administrative is Constants {
         orchestrator.giveCollectedFeesToUser(nonExistentId, 1);
         vm.stopPrank();
     }
+
+    // ============================================================
+    //                   BREAKER SETTERS
+    // ============================================================
+
+    function test_unit_revert_setShopOperationsBreaker__Unauthorized() public {
+        vm.startPrank(USER.Address);
+        vm.expectRevert(Ownable.Unauthorized.selector);
+        orchestrator.setShopOperationsBreaker(false);
+        vm.stopPrank();
+    }
+
+    function test_unit_revert_setDepositOperationsBreaker__Unauthorized()
+        public
+    {
+        vm.startPrank(USER.Address);
+        vm.expectRevert(Ownable.Unauthorized.selector);
+        orchestrator.setDepositOperationsBreaker(false);
+        vm.stopPrank();
+    }
+
+    function test_unit_revert_setUserRegistrationBreaker__Unauthorized()
+        public
+    {
+        vm.startPrank(USER.Address);
+        vm.expectRevert(Ownable.Unauthorized.selector);
+        orchestrator.setUserRegistrationBreaker(false);
+        vm.stopPrank();
+    }
+
+    function test_unit_revert_setContentRegistrationBreaker__Unauthorized()
+        public
+    {
+        vm.startPrank(USER.Address);
+        vm.expectRevert(Ownable.Unauthorized.selector);
+        orchestrator.setContentRegistrationBreaker(false);
+        vm.stopPrank();
+    }
+
+    // ============================================================
+    //             BREAKER-PROTECTED FUNCTIONS
+    // ============================================================
+
+    function test_unit_revert_purchaseSong__ShopOperationsArePaused() public {
+        uint256 netPrice = 500_000000;
+        uint256 songID = _execute_orchestrator_registerSong(
+            ARTIST_1.Address,
+            "Shop Breaker Revert Song",
+            ARTIST_1_ID,
+            new uint256[](0),
+            "https://arweave.net/mediaURI2",
+            "https://arweave.net/metadataURI2",
+            true,
+            netPrice
+        );
+        _assign_song_to_album_direct(songID, 1);
+        (uint256 totalPrice, ) = orchestrator.getPriceWithFee(netPrice);
+        _execute_orchestrator_depositFunds(USER.Address, totalPrice);
+
+        uint256 balanceBefore = userDB.getBalance(USER_ID);
+
+        vm.startPrank(ADMIN.Address);
+        orchestrator.setShopOperationsBreaker(false);
+        vm.stopPrank();
+
+        vm.startPrank(USER.Address);
+        vm.expectRevert(ErrorsLib.ShopOperationsArePaused.selector);
+        orchestrator.purchaseSong(songID, 0);
+        vm.stopPrank();
+
+        assertEq(
+            userDB.getBalance(USER_ID),
+            balanceBefore,
+            "User balance should remain unchanged after failed purchase"
+        );
+    }
+
+    function test_unit_revert_depositFunds__DepositOperationsArePaused()
+        public
+    {
+        uint256 amount = 100_000000;
+        _giveUsdc(USER.Address, amount);
+
+        vm.startPrank(USER.Address);
+        usdc.approve(address(orchestrator), amount);
+        vm.stopPrank();
+
+        uint256 balanceBefore = userDB.getBalance(USER_ID);
+
+        vm.startPrank(ADMIN.Address);
+        orchestrator.setDepositOperationsBreaker(false);
+        vm.stopPrank();
+
+        vm.startPrank(USER.Address);
+        vm.expectRevert(ErrorsLib.DepositOperationsArePaused.selector);
+        orchestrator.depositFunds(amount);
+        vm.stopPrank();
+
+        assertEq(
+            userDB.getBalance(USER_ID),
+            balanceBefore,
+            "User balance should remain unchanged after failed deposit"
+        );
+    }
+
+    function test_unit_revert_register__UserRegistrationIsPaused() public {
+        vm.startPrank(ADMIN.Address);
+        orchestrator.setUserRegistrationBreaker(false);
+        vm.stopPrank();
+
+        vm.startPrank(WILDCARD_ACCOUNT.Address);
+        vm.expectRevert(ErrorsLib.UserRegistrationIsPaused.selector);
+        orchestrator.register(
+            "wildcard",
+            "https://arweave.net/wildcardURI",
+            WILDCARD_ACCOUNT.Address
+        );
+        vm.stopPrank();
+
+        assertEq(
+            userDB.getId(WILDCARD_ACCOUNT.Address),
+            0,
+            "Wildcard account should not be registered after paused registration"
+        );
+    }
+
+    function test_unit_revert_registerSong__ContentRegistrationIsPaused()
+        public
+    {
+        StructsLib.RegisterSongInput[] memory inputs = new StructsLib.RegisterSongInput[](1);
+        inputs[0] = StructsLib.RegisterSongInput({
+            title: "Content Breaker Revert Song",
+            principalArtistId: ARTIST_1_ID,
+            artistIDs: new uint256[](0),
+            mediaURI: "https://arweave.net/mediaURI3",
+            metadataURI: "https://arweave.net/metadataURI3",
+            canBePurchased: false,
+            netprice: 0,
+            splitMetadata: new SplitterDB.Metadata[](0)
+        });
+
+        uint256 songCountBefore = songDB.getCurrentId();
+
+        vm.startPrank(ADMIN.Address);
+        orchestrator.setContentRegistrationBreaker(false);
+        vm.stopPrank();
+
+        vm.startPrank(ARTIST_1.Address);
+        vm.expectRevert(ErrorsLib.ContentRegistrationIsPaused.selector);
+        orchestrator.registerSong(inputs);
+        vm.stopPrank();
+
+        assertEq(
+            songDB.getCurrentId(),
+            songCountBefore,
+            "Song count should remain unchanged after failed content registration"
+        );
+    }
 }

@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 import "testing/Constants.sol";
 
 import {SongDB} from "@shine/contracts/database/SongDB.sol";
+import {ErrorsLib} from "@shine/contracts/orchestrator/library/ErrorsLib.sol";
 
 contract Orchestrator_test_unit_correct_Administrative is Constants {
     AccountData ARTIST_3 = WILDCARD_ACCOUNT;
@@ -241,6 +242,156 @@ contract Orchestrator_test_unit_correct_Administrative is Constants {
             feesAccumulatedAfter,
             0,
             "Collected fees in orchestrator should be reset to zero after giving to user"
+        );
+    }
+
+    function test_unit_correct_setShopOperationsBreaker() public {
+        uint256 netPrice = 500_000000;
+        uint256 songID = _execute_orchestrator_registerSong(
+            ARTIST_1.Address,
+            "Shop Breaker Test Song",
+            ARTIST_1_ID,
+            new uint256[](0),
+            "https://arweave.net/mediaURI2",
+            "https://arweave.net/metadataURI2",
+            true,
+            netPrice
+        );
+        _assign_song_to_album_direct(songID, 1);
+        (uint256 totalPrice, ) = orchestrator.getPriceWithFee(netPrice);
+        _execute_orchestrator_depositFunds(USER.Address, totalPrice);
+
+        vm.startPrank(ADMIN.Address);
+        orchestrator.setShopOperationsBreaker(false);
+        vm.stopPrank();
+
+        vm.startPrank(USER.Address);
+        vm.expectRevert(ErrorsLib.ShopOperationsArePaused.selector);
+        orchestrator.purchaseSong(songID, 0);
+        vm.stopPrank();
+
+        vm.startPrank(ADMIN.Address);
+        orchestrator.setShopOperationsBreaker(true);
+        vm.stopPrank();
+
+        vm.startPrank(USER.Address);
+        orchestrator.purchaseSong(songID, 0);
+        vm.stopPrank();
+
+        assertEq(
+            songDB.userOwnershipStatus(songID, USER_ID),
+            bytes1(0x01),
+            "User should own the song after purchasing with re-enabled shop breaker"
+        );
+    }
+
+    function test_unit_correct_setDepositOperationsBreaker() public {
+        uint256 amount = 100_000000;
+        _giveUsdc(USER.Address, amount);
+
+        vm.startPrank(USER.Address);
+        usdc.approve(address(orchestrator), amount);
+        vm.stopPrank();
+
+        vm.startPrank(ADMIN.Address);
+        orchestrator.setDepositOperationsBreaker(false);
+        vm.stopPrank();
+
+        vm.startPrank(USER.Address);
+        vm.expectRevert(ErrorsLib.DepositOperationsArePaused.selector);
+        orchestrator.depositFunds(amount);
+        vm.stopPrank();
+
+        vm.startPrank(ADMIN.Address);
+        orchestrator.setDepositOperationsBreaker(true);
+        vm.stopPrank();
+
+        uint256 balanceBefore = userDB.getBalance(USER_ID);
+
+        vm.startPrank(USER.Address);
+        orchestrator.depositFunds(amount);
+        vm.stopPrank();
+
+        assertGt(
+            userDB.getBalance(USER_ID),
+            balanceBefore,
+            "User balance should increase after deposit with re-enabled breaker"
+        );
+    }
+
+    function test_unit_correct_setUserRegistrationBreaker() public {
+        vm.startPrank(ADMIN.Address);
+        orchestrator.setUserRegistrationBreaker(false);
+        vm.stopPrank();
+
+        vm.startPrank(WILDCARD_ACCOUNT.Address);
+        vm.expectRevert(ErrorsLib.UserRegistrationIsPaused.selector);
+        orchestrator.register(
+            "wildcard",
+            "https://arweave.net/wildcardURI",
+            WILDCARD_ACCOUNT.Address
+        );
+        vm.stopPrank();
+
+        assertEq(
+            userDB.getId(WILDCARD_ACCOUNT.Address),
+            0,
+            "Wildcard account should not be registered after failed registration"
+        );
+
+        vm.startPrank(ADMIN.Address);
+        orchestrator.setUserRegistrationBreaker(true);
+        vm.stopPrank();
+
+        vm.startPrank(WILDCARD_ACCOUNT.Address);
+        orchestrator.register(
+            "wildcard",
+            "https://arweave.net/wildcardURI",
+            WILDCARD_ACCOUNT.Address
+        );
+        vm.stopPrank();
+
+        assertGt(
+            userDB.getId(WILDCARD_ACCOUNT.Address),
+            0,
+            "Wildcard account should be registered after re-enabling user registration breaker"
+        );
+    }
+
+    function test_unit_correct_setContentRegistrationBreaker() public {
+        StructsLib.RegisterSongInput[] memory inputs = new StructsLib.RegisterSongInput[](1);
+        inputs[0] = StructsLib.RegisterSongInput({
+            title: "Content Breaker Test Song",
+            principalArtistId: ARTIST_1_ID,
+            artistIDs: new uint256[](0),
+            mediaURI: "https://arweave.net/mediaURI3",
+            metadataURI: "https://arweave.net/metadataURI3",
+            canBePurchased: false,
+            netprice: 0,
+            splitMetadata: new SplitterDB.Metadata[](0)
+        });
+
+        vm.startPrank(ADMIN.Address);
+        orchestrator.setContentRegistrationBreaker(false);
+        vm.stopPrank();
+
+        vm.startPrank(ARTIST_1.Address);
+        vm.expectRevert(ErrorsLib.ContentRegistrationIsPaused.selector);
+        orchestrator.registerSong(inputs);
+        vm.stopPrank();
+
+        vm.startPrank(ADMIN.Address);
+        orchestrator.setContentRegistrationBreaker(true);
+        vm.stopPrank();
+
+        vm.startPrank(ARTIST_1.Address);
+        uint256[] memory songIds = orchestrator.registerSong(inputs);
+        vm.stopPrank();
+
+        assertGt(
+            songIds[0],
+            0,
+            "Song should be registered after re-enabling content registration breaker"
         );
     }
 }
