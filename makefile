@@ -1,16 +1,29 @@
 include .env
 export
 
-ARB_SEPOLIA_ARGS := --rpc-url $(RPC_URL_ARB_SEPOLIA) \
+TESTNET_ARGS := --rpc-url $(RPC_URL_TESTNET) \
 					 --account defaultKey \
 					 --broadcast \
 					 --verify \
 					 --etherscan-api-key $(ETHERSCAN_API) \
 
+
+MAINNET_ARGS := --rpc-url $(RPC_URL) \
+					 --account defaultKey \
+					 --broadcast \
+					 --verify \
+					 --etherscan-api-key $(ETHERSCAN_API) \
+					
+
 deployTestnet:
 	@forge clean
-	@echo "Deploying SongDB to Base testnet"
-	@forge script script/Deploy.s.sol:DeployScript $(ARB_SEPOLIA_ARGS)
+	@echo "Deploying to testnet"
+	@forge script script/Deploy.s.sol:DeployScript $(TESTNET_ARGS)
+
+deployMainnet:
+	@forge clean
+	@echo "Deploying to mainnet"
+	@forge script script/Deploy.s.sol:DeployScript $(MAINNET_ARGS)
 
 unitTest:
 	@echo "Running SongDB unit tests"
