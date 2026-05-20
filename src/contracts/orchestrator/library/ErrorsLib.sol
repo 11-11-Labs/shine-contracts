@@ -22,6 +22,9 @@ library ErrorsLib {
     /// @dev Thrown when attempting to set database addresses after they have already been initialized
     error AddressSetupAlreadyDone();
 
+    /// @dev Thrown when attempting to set the initial owner to the zero address
+    error AddressIsEmpty();
+
     //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 Access Control Errors 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋
 
     /// @dev Thrown when caller is not the owner of the specified user ID

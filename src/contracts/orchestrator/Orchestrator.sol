@@ -151,6 +151,9 @@ contract Orchestrator is Ownable {
         address _stablecoinAddress,
         uint16 _percentageFee
     ) {
+        if (initialOwner == address(0) || _stablecoinAddress == address(0))
+            revert ErrorsLib.AddressIsEmpty();
+
         _initializeOwner(initialOwner);
         stablecoin.current = _stablecoinAddress;
         percentageFee = _percentageFee;
