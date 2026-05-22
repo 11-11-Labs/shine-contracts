@@ -463,6 +463,7 @@ contract Orchestrator is Ownable {
         uint256 extraAmount
     ) external checkShopBreaker {
         uint256 userID = userDB.getId(msg.sender);
+        if (userID == 0) revert ErrorsLib.AddressHasNotLinkedToUserId();
         songDB.purchase(songId, userID);
         userDB.addSong(userID, songId);
 
@@ -678,6 +679,7 @@ contract Orchestrator is Ownable {
         uint256 extraAmount
     ) external checkShopBreaker {
         uint256 userID = userDB.getId(msg.sender);
+        if (userID == 0) revert ErrorsLib.AddressHasNotLinkedToUserId();
 
         uint[] memory listOfSong = albumDB.purchase(albumId, userID);
         userDB.addSongs(userID, listOfSong);
@@ -779,6 +781,9 @@ contract Orchestrator is Ownable {
      *      Reverts if no proposal exists or if the timelock has not yet expired.
      */
     function executeStablecoinAddressChange() external onlyOwner {
+        if (stablecoin.proposed == address(0))
+            revert ErrorsLib.ProposedAddressCannotBeZero();
+
         if (block.timestamp < stablecoin.timeToExecute)
             revert ErrorsLib.TimelockNotExpired();
 

@@ -246,6 +246,8 @@ contract AlbumDB is IdUtils, Ownable {
         string calldata specialEditionName,
         uint256 maxSupplySpecialEdition
     ) external onlyOwner returns (uint256) {
+        if (songIDs.length == 0) revert AlbumCannotHaveZeroSongs();
+
         uint256 idAssigned = _getNextId();
 
         for (uint256 i = 0; i < songIDs.length; i++) {
@@ -633,18 +635,10 @@ contract AlbumDB is IdUtils, Ownable {
         for (uint256 i = 0; i < album[id].MusicIds.length; i++) {
             delete songUsedInAlbum[album[id].MusicIds[i]];
         }
-        _validateSongs(musicIds);
-    }
-
-    /**
-     * @notice Validates that song IDs are not already used in other albums
-     * @dev Reverts if any song ID is found to be already assigned
-     * @param musicIds Array of song IDs to validate
-     */
-    function _validateSongs(uint256[] memory musicIds) private view {
         for (uint256 i = 0; i < musicIds.length; i++) {
             if (songUsedInAlbum[musicIds[i]] != 0)
                 revert SongAlreadyUsedInAlbum(musicIds[i]);
+            songUsedInAlbum[musicIds[i]] = id;
         }
     }
 }

@@ -239,6 +239,14 @@ contract AlbumDB_test_fuzz is Constants {
     function test_fuzz_AlbumDB__change(ChangeInputs memory inputs) public {
         vm.assume(bytes(inputs.title).length > 0);
         vm.assume(inputs.musicIds.length > 0);
+
+        // An album cannot contain duplicate song IDs
+        for (uint256 i = 0; i < inputs.musicIds.length; i++) {
+            for (uint256 j = i + 1; j < inputs.musicIds.length; j++) {
+                vm.assume(inputs.musicIds[i] != inputs.musicIds[j]);
+            }
+        }
+
         uint256[] memory listOfSongIDsBefore = new uint256[](3);
         listOfSongIDsBefore[0] = 67;
         listOfSongIDsBefore[1] = 21;

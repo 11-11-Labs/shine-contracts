@@ -313,6 +313,7 @@ contract SongDB is IdUtils, Ownable {
         ownByUserId[id][toUserId] = 0x02;
         song[id].TimesBought++;
         song[id].listOfOwners.push(toUserId);
+        ownerIndex[id][toUserId] = song[id].listOfOwners.length;
 
         emit Gifted(id, toUserId, block.timestamp);
     }
@@ -577,12 +578,12 @@ contract SongDB is IdUtils, Ownable {
     }
 
     /**
-     * @notice Checks if a user has already purchased a song
+     * @notice Checks if a user already owns a specific song
      * @param id The song ID to check
      * @param userId The user ID to check
-     * @return True if the user has purchased the song, false otherwise
+     * @return True if the user already owns the song (bought or gifted), false otherwise
      */
-    function canUserBuy(
+    function doesUserOwnSong(
         uint256 id,
         uint256 userId
     ) external view returns (bool) {

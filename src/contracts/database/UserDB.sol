@@ -76,7 +76,6 @@ contract UserDB is IdUtils, Ownable {
         Removed
     }
 
-
     //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 State Variables 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋
     /**
      * @notice Maps user wallet addresses to their unique IDs
@@ -278,11 +277,7 @@ contract UserDB is IdUtils, Ownable {
     ) external onlyOwner onlyIfExist(userId) onlyIfNotBanned(userId) {
         users[userId].PurchasedSongIds.push(songId);
 
-        emit SongListChangedSingle(
-            userId,
-            songId,
-            SongListChangeType.Added
-        );
+        emit SongListChangedSingle(userId, songId, SongListChangeType.Added);
     }
 
     /**
@@ -314,11 +309,7 @@ contract UserDB is IdUtils, Ownable {
             }
         }
 
-        emit SongListChangedSingle(
-            userId,
-            songId,
-            SongListChangeType.Removed
-        );
+        emit SongListChangedSingle(userId, songId, SongListChangeType.Removed);
     }
 
     /**
@@ -339,11 +330,7 @@ contract UserDB is IdUtils, Ownable {
             }
         }
 
-        emit SongListChangedBatch(
-            userId,
-            songIds,
-            SongListChangeType.Added
-        );
+        emit SongListChangedBatch(userId, songIds, SongListChangeType.Added);
     }
 
     /**
@@ -415,11 +402,7 @@ contract UserDB is IdUtils, Ownable {
     ) external onlyOwner onlyIfExist(userId) onlyIfNotBanned(userId) {
         users[userId].Balance += amount;
 
-        emit BalanceChanged(
-            userId,
-            amount,
-            BalanceChangeType.Added
-        );
+        emit BalanceChanged(userId, amount, BalanceChangeType.Added);
     }
 
     /**
@@ -434,11 +417,7 @@ contract UserDB is IdUtils, Ownable {
     ) external onlyOwner onlyIfExist(userId) onlyIfNotBanned(userId) {
         users[userId].Balance -= amount;
 
-        emit BalanceChanged(
-            userId,
-            amount,
-            BalanceChangeType.Deducted
-        );
+        emit BalanceChanged(userId, amount, BalanceChangeType.Deducted);
     }
 
     /**
@@ -543,19 +522,6 @@ contract UserDB is IdUtils, Ownable {
         return users[userId].PurchasedSongIds;
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /**********************************
 🮋🮋 Made with ❤️ by 11:11 Labs 🮋🮋
