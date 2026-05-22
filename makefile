@@ -30,3 +30,7 @@ unitTest:
 	@forge 	test --match-path \
 			test/unit/$(TEST_TYPE)/SongDB.t.sol \
 			--summary --detailed --gas-report -vvvvv --show-progress
+
+checkPrice:
+	@echo "Checking price of SongDB"
+	@forge script script/Deploy.s.sol:DeployScript --rpc-url $(RPC_URL) --account defaultKey 

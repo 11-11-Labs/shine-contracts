@@ -15,7 +15,7 @@ contract DeployScript is Script {
     SplitterDB splitterDB;
     Orchestrator orchestrator;
 
-    address usdcAddress = 0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d;
+    address usdcAddress = 0xaf88d065e77c8cC2239327C5EDb3A432268e5831;
     address admin = 0x5cBf2D4Bbf834912Ad0bD59980355b57695e8309;
 
     function setUp() public {}
