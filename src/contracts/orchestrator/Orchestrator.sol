@@ -180,6 +180,8 @@ contract Orchestrator is Ownable {
         string calldata metadataURI,
         address addressToUse
     ) external checkUserRegistrationBreaker returns (uint256) {
+        if (addressToUse == address(0)) revert ErrorsLib.AddressIsEmpty();
+
         return userDB.register(name, metadataURI, addressToUse);
     }
 
@@ -210,6 +212,8 @@ contract Orchestrator is Ownable {
     function changeAddress(uint256 id, address newAddress) external {
         if (userDB.getAddress(id) != msg.sender)
             revert ErrorsLib.AddressIsNotOwnerOfUserId();
+
+        if (newAddress == address(0)) revert ErrorsLib.AddressIsEmpty();
 
         userDB.changeAddress(id, newAddress);
     }
