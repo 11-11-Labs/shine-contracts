@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security Vulnerability
+    url: https://github.com/11-11labs/Shine_contracts/blob/main/SECURITY.md
+    about: Please report security issues privately following our security policy.
+  - name: Questions & Support
+    url: https://github.com/11-11labs/Shine_contracts/blob/main/README.md#support
+    about: Check the README and existing docs before opening an issue.

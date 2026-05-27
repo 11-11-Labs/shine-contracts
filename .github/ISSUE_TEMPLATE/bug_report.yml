@@ -1,0 +1,127 @@
+name: Bug Report
+description: Report unexpected behavior, reverts, or security concerns in the contracts.
+title: '[Bug] '
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Shine is only as strong as the community that keeps it honest.
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: How serious is this?
+      options:
+        - Critical — loss of funds, permanent data corruption, or total contract lock
+        - High — access control bypass, incorrect royalty distribution, or significant DoS
+        - Medium — unexpected reverts, state inconsistency, or notable gas waste
+        - Low — cosmetic issues, off-by-one edge cases, or minor gas inefficiency
+        - Informational — unclear behavior, missing documentation, or code smell
+    validations:
+      required: true
+
+  - type: dropdown
+    id: contracts
+    attributes:
+      label: Affected contracts
+      description: Which contracts are involved?
+      options:
+        - Orchestrator
+        - UserDB
+        - SongDB
+        - AlbumDB
+        - SplitterDB
+        - IdUtils / Library
+        - Deployment Script
+        - Multiple / Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the unexpected behavior in plain language.
+      placeholder: When a user tries to purchase a song after...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Give us a minimal test case or sequence of calls.
+      placeholder: |
+        1. Deploy contracts with...
+        2. Call Orchestrator.purchaseSong(1, 1) as...
+        3. Observe that...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs actual behavior
+      description: What did you expect to happen? What actually happened?
+      placeholder: Expected: User balance is deducted and song ownership is recorded. Actual: Transaction reverts with...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or error output
+      description: Paste relevant traces, revert reasons, or event logs.
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Help us reproduce your setup.
+      placeholder: |
+        Foundry version:
+        Solidity version:
+        Operating system:
+        Commit hash:
+    validations:
+      required: false
+
+  - type: textarea
+    id: disclosure
+    attributes:
+      label: AI Tool Disclosure (Required)
+      description: |
+        Transparency is mandatory. For every AI tool you used to create or refine this issue, state:
+        - **Tool name** (e.g., ChatGPT, Claude, Copilot, Cursor)
+        - **Model version** (e.g., GPT-4, Claude 3.5 Sonnet)
+        - **Specific purpose** (e.g., "Analyzed the contract to identify the vulnerability", "Drafted the reproduction steps", "Generated the proof-of-concept trace", "Grammar checking only", "Reviewed this issue before posting")
+        
+        If you did not use any AI tools, write **"None"**.
+        
+        Any issue found to contain undisclosed AI-generated content will be closed and disregarded.
+      placeholder: |
+        Example:
+        - Claude 3.5 Sonnet: Used to analyze the Orchestrator code and identify the reentrancy vector described above.
+        - ChatGPT-4o: Used to draft the initial issue description.
+        
+        Or:
+        None
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched existing issues and this has not been reported before
+          required: true
+        - label: I can reproduce this on the latest commit
+          required: true
+        - label: I have reviewed the relevant contract code and NatSpec before filing this
+          required: false
