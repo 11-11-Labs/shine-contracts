@@ -5,7 +5,9 @@
 ![Foundry](https://img.shields.io/badge/Framework-Foundry-orange)
 ![Version](https://img.shields.io/badge/Version-0.0.1%20"99%20Steps"-brightgreen)
 
-> The blockchain backbone powering **Shine** a decentralized music marketplace that empowers artists and listeners through direct connections, fair compensation, and transparency. These smart contracts serve as an immutable source of truth for the entire ecosystem, ensuring permanent records, true ownership, and data resilience. Even if the Shine platform disappears, users can always recover their music purchases, artist histories, royalties, and transaction records from the blockchain.
+> The blockchain backbone of **Shine**: a music marketplace built to empower artists and listeners through direct connections, fair pay, and transparency.
+>
+> These contracts are the immutable source of truth for the entire ecosystem. Your purchases, releases, and royalties are recorded permanently on-chain. If Shine ever goes offline, this data survives — owned by you, accessible to anyone.
 
 ## Overview
 
@@ -120,7 +122,7 @@ key features:
 key features:
 ├── Registration & Profile Management
 │   ├── register() - Register users/artists
-│   ├── chnageBasicData() - Update profiles
+│   ├── changeBasicData() - Update profiles
 │   └── changeAddress() - Transfer accounts
 │
 ├── Fund Management
@@ -383,20 +385,19 @@ SHINE-PPL-1.0 (Shine Platform Partnership License)
 
 ## Contributing
 
-Contributions welcome! Please ensure:
-- All tests pass (`forge test`)
-- Code formatted (`forge fmt`)
-- Comments documented
-- No unsafe patterns
-- Gas-optimized where possible
+We welcome contributions. Shine is built transparently and collaboratively, and we appreciate anyone who helps improve it.
+
+For guidelines on how to contribute — from setup and testing to code style and pull requests — see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+If you discover a security vulnerability, please follow our [security policy](SECURITY.md) and report it privately.
 
 ## Support
 
-For questions or issues:
-- Check existing documentation
-- Review contract comments and NatSpec
-- Examine test files for usage examples
-- Contact 11:11 Labs
+Need help? Start here:
+
+- Read the docs and NatSpec comments in the contracts
+- Look at the test files — they are the best usage examples
+- Reach out through the project's official channels
 
 ---
 
