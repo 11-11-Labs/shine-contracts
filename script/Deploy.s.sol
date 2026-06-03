@@ -15,12 +15,23 @@ contract DeployScript is Script {
     SplitterDB splitterDB;
     Orchestrator orchestrator;
 
-    address usdcAddress = 0xaf88d065e77c8cC2239327C5EDb3A432268e5831;
+    uint256 ArbSepoliaChainId = 421614;
+    uint256 ArbMainnet = 42161;
+
+    address usdcAddressMainnet = 0xaf88d065e77c8cC2239327C5EDb3A432268e5831;
+    address usdcAddressTestnet = 0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d;
     address admin = 0x5cBf2D4Bbf834912Ad0bD59980355b57695e8309;
 
     function setUp() public {}
 
     function run() public {
+        address usdcAddress;
+
+        if (block.chainid == ArbSepoliaChainId)
+            usdcAddress = usdcAddressTestnet;
+        else if (block.chainid == ArbMainnet) usdcAddress = usdcAddressMainnet;
+        else revert("Unsupported chain");
+
         vm.startBroadcast();
 
         orchestrator = new Orchestrator(
