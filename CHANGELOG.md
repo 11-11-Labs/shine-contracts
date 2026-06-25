@@ -6,7 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [0.0.1] - 2026-03-22
 
+Initial release of the Shine smart contracts — the decentralized backbone of the Shine music marketplace.
+
 ### Added
+
+#### Smart Contracts
 
 - **UserDB**: User and artist registry contract with profile management, balance tracking, purchase history, and moderation controls.
 - **SongDB**: Immutable song records contract with ownership tracking, purchase/gift/refund flows, and metadata management.
@@ -22,8 +26,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - Time-locked stablecoin address upgrade mechanism (1-day timelock).
   - Orchestrator migration: `migrateOrchestrator()` transfers ownership of all DB contracts to a new orchestrator address.
   - Fee distribution: `withdrawCollectedFees()` and `giveCollectedFeesToUser()`.
+
+#### Libraries & Interfaces
+
 - **Orchestrator Libraries**: `ErrorsLib`, `EventsLib`, and `StructsLib` for shared error definitions, events, and data structures.
 - **IdUtils Library**: Unique sequential ID generation utility for all entities.
 - **IERC20 Interface**: Minimal ERC-20 interface for stablecoin interactions.
-- **Deployment script**: `Deploy.s.sol` for deploying the full contract suite.
-- **Test suite**: Unit tests (correct behavior and revert cases) and fuzz tests for database and orchestrator contracts.
+
+#### Deployment & Tooling
+
+- **Deployment scripts**: `Deploy.s.sol` (mainnet/testnet) and `DeployAnvil.s.sol` (local development).
+- **Makefile**: Commands for testnet, mainnet, and Anvil deployments, unit tests, and price checks.
+- **Foundry configuration**: `foundry.toml` with IR pipeline, optimizer (200 runs), and custom remappings.
+- **Environment template**: `.env.example` for RPC URLs and Etherscan API key.
+
+#### Testing
+
+- **Unit tests**: Happy path and revert condition tests for all database and orchestrator contracts.
+- **Fuzz tests**: Property-based tests for album, song, user, and administrative operations.
+- **Test constants**: Shared `Constants.sol` for consistent test account setup.
+
+#### Documentation & Community
+
+- **README**: Comprehensive project overview, architecture diagrams, setup instructions, and usage examples.
+- **CONTRIBUTING.md**: Development workflow, code style standards, testing guidelines, commit conventions, and AI tool disclosure policy.
+- **SECURITY.md**: Vulnerability reporting process, scope definitions, response timeline, and disclosure policy.
+- **CODE_OF_CONDUCT.md**: Contributor Covenant v2.0 for community standards.
+- **LICENSE**: SHINE-PPL-1.0 (Shine Protocol Public License) — non-commercial use permitted, commercial use requires partnership.
+
+#### GitHub Templates
+
+- **Bug report template**: Structured issue form with severity levels, affected contracts, reproduction steps, and AI tool disclosure.
+- **Feature request template**: Proposal form with scope selection, gas considerations, and contribution willingness.
+- **Issue config**: Links to security policy and support resources; blank issues disabled.
+
+### Architecture
+
+- **Database + Orchestrator pattern**: Immutable database contracts (UserDB, SongDB, AlbumDB, SplitterDB) owned by an upgradeable Orchestrator.
+- **Ownable access control**: Each database sealed under its Orchestrator; migration path for future versions.
+- **Basis points system**: All percentages calculated as `uint16` basis points (10,000 bp = 100%).
+- **Event-driven**: All state changes emit events for off-chain indexing and transparency.
