@@ -18,6 +18,7 @@ pragma solidity ^0.8.20;
  */
 
 import {Ownable} from "@solady/auth/Ownable.sol";
+import {OwnableRoles} from "@solady/auth/OwnableRoles.sol";
 import {IERC20} from "@shine/library/IERC20.sol";
 import {ErrorsLib} from "@shine/contracts/orchestrator/library/ErrorsLib.sol";
 import {StructsLib} from "@shine/contracts/orchestrator/library/StructsLib.sol";
@@ -28,8 +29,13 @@ import {AlbumDB} from "@shine/contracts/database/AlbumDB.sol";
 import {UserDB} from "@shine/contracts/database/UserDB.sol";
 import {SplitterDB} from "@shine/contracts/database/SplitterDB.sol";
 
-contract Orchestrator is Ownable {
+contract Orchestrator is OwnableRoles {
     //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 State Variables 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋
+
+    uint256 private constant API_ROLE = uint256(keccak256("API_ROLE"));
+
+    bytes32 private immutable ORCHESTRATOR_IDENTIFIER =
+        keccak256(abi.encodePacked("SHINE_ORCHESTRATOR", address(this)));
 
     /// @notice Address of the next Orchestrator contract in case of migration
     address private newOrchestratorAddress;
@@ -148,13 +154,20 @@ contract Orchestrator is Ownable {
      */
     constructor(
         address initialOwner,
+        address _apiAddress,
         address _stablecoinAddress,
         uint16 _percentageFee
     ) {
-        if (initialOwner == address(0) || _stablecoinAddress == address(0))
-            revert ErrorsLib.AddressIsEmpty();
+        if (
+            initialOwner == address(0) ||
+            _apiAddress == address(0) ||
+            _stablecoinAddress == address(0)
+        ) revert ErrorsLib.AddressIsEmpty();
 
         _initializeOwner(initialOwner);
+
+        _grantRoles(_apiAddress, API_ROLE);
+
         stablecoin.current = _stablecoinAddress;
         percentageFee = _percentageFee;
         breaker = StructsLib.Breakers({
@@ -179,7 +192,12 @@ contract Orchestrator is Ownable {
         string calldata name,
         string calldata metadataURI,
         address addressToUse
-    ) external checkUserRegistrationBreaker returns (uint256) {
+    )
+        external
+        checkUserRegistrationBreaker
+        onlyRoles(API_ROLE)
+        returns (uint256)
+    {
         if (addressToUse == address(0)) revert ErrorsLib.AddressIsEmpty();
 
         return userDB.register(name, metadataURI, addressToUse);
@@ -192,7 +210,7 @@ contract Orchestrator is Ownable {
      * @param name New display name
      * @param metadataURI New metadata URI for profile information
      */
-    function chnageBasicData(
+    function changeBasicData(
         uint256 id,
         string calldata name,
         string calldata metadataURI
@@ -294,6 +312,88 @@ contract Orchestrator is Ownable {
         userDB.deductBalance(userId, amount);
 
         IERC20(stablecoin.current).transfer(msg.sender, amount);
+    }
+
+    //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 Registration Management 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋
+
+    function registerAlbumAndSongs(
+        StructsLib.RegisterSongAndAlbumInput calldata inputs,
+        uint256 principalArtistId
+    )
+        external
+        checkContentRegistrationBreaker
+        onlyRoles(API_ROLE)
+        returns (uint256[] memory songIds, uint256 albumId)
+    {
+        uint256 length = inputs.songInputs.length;
+        if (length == 0) revert ErrorsLib.DataIsEmpty();
+        if (!userDB.exists(principalArtistId))
+            revert ErrorsLib.UserIdDoesNotExist(principalArtistId);
+        songIds = new uint256[](length);
+
+        for (uint256 i = 0; i < length; ) {
+            if (bytes(inputs.songInputs[i].title).length == 0)
+                revert ErrorsLib.TitleCannotBeEmpty();
+
+            if (bytes(inputs.albumInput.title).length == 0)
+                revert ErrorsLib.TitleCannotBeEmpty();
+
+            if (inputs.albumInput.isASpecialEdition) {
+                if (inputs.albumInput.maxSupplySpecialEdition == 0)
+                    revert ErrorsLib.MaxSupplyMustBeGreaterThanZero();
+
+                if (bytes(inputs.albumInput.specialEditionName).length == 0)
+                    revert ErrorsLib.SpecialEditionNameCannotBeEmpty();
+            }
+
+            uint256[] calldata featuredArtists = inputs.songInputs[i].artistIDs;
+
+            if (featuredArtists.length > 0) {
+                for (uint256 j = 0; j < featuredArtists.length; ) {
+                    if (!userDB.exists(featuredArtists[j]))
+                        revert ErrorsLib.UserIdDoesNotExist(featuredArtists[j]);
+
+                    unchecked {
+                        j++;
+                    }
+                }
+            }
+
+            songIds[i] = songDB.register(
+                inputs.songInputs[i].title,
+                principalArtistId,
+                inputs.songInputs[i].artistIDs,
+                inputs.songInputs[i].mediaURI,
+                inputs.songInputs[i].metadataURI,
+                inputs.songInputs[i].canBePurchased,
+                inputs.songInputs[i].netprice
+            );
+
+            if (inputs.songInputs[i].splitMetadata.length > 0)
+                _setSplit(
+                    false,
+                    songIds[i],
+                    inputs.songInputs[i].splitMetadata
+                );
+
+            unchecked {
+                i++;
+            }
+        }
+
+        albumId = albumDB.register(
+            inputs.albumInput.title,
+            principalArtistId,
+            inputs.albumInput.metadataURI,
+            songIds,
+            inputs.albumInput.price,
+            inputs.albumInput.canBePurchased,
+            inputs.albumInput.isASpecialEdition,
+            inputs.albumInput.specialEditionName,
+            inputs.albumInput.maxSupplySpecialEdition
+        );
+        if (inputs.albumInput.splitMetadata.length > 0)
+            _setSplit(true, albumId, inputs.albumInput.splitMetadata);
     }
 
     //🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮶 Song Management 🮵🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋🮋
@@ -555,7 +655,8 @@ contract Orchestrator is Ownable {
                     songDB.getPrincipalArtistId(songIDs[j]) !=
                     inputs[i].principalArtistId
                 )
-                    revert ErrorsLib.ListCannotContainSongsFromDifferentPrincipalArtist();
+                    revert ErrorsLib
+                        .ListCannotContainSongsFromDifferentPrincipalArtist();
 
                 unchecked {
                     j++;

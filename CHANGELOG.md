@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.0.2] - Unreleased
+
+### Added
+
+#### Orchestrator
+- Integrated `OwnableRoles` for role-based access control.
+  - Added `API_ROLE` for API address management.
+  - Introduced `ORCHESTRATOR_IDENTIFIER` for unique orchestrator identification.
+- added `registerAlbumAndSongs` function to allow a registrationof an album and its songs in a single transaction.
+
+### Changed
+
+#### Orchestrator
+- Updated constructor to accept an `_apiAddress` parameter and grant `API_ROLE` to it.
+- Changed terrible typo in `chnageBasicData` function name to `changeBasicData` (すみません:c).
+
 ## [0.0.1] - 2026-03-22
 
 Initial release of the Shine smart contracts — the decentralized backbone of the Shine music marketplace.

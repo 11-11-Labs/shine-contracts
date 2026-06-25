@@ -90,4 +90,31 @@ library StructsLib {
         uint256 maxSupplySpecialEdition;
         SplitterDB.Metadata[] splitMetadata;
     }
+
+    struct SongDataInputs {
+        string title;
+        uint256[] artistIDs;
+        string mediaURI;
+        string metadataURI;
+        bool canBePurchased;
+        uint256 netprice;
+        SplitterDB.Metadata[] splitMetadata;
+    }
+
+    struct AlbumDataInputs {
+        string title;
+        string metadataURI;
+        uint256[] songIDs;
+        uint256 price;
+        bool canBePurchased;
+        bool isASpecialEdition;
+        string specialEditionName;
+        uint256 maxSupplySpecialEdition;
+        SplitterDB.Metadata[] splitMetadata;
+    }
+
+    struct RegisterSongAndAlbumInput {
+        AlbumDataInputs albumInput;
+        SongDataInputs[] songInputs;
+    }
 }
